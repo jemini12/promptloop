@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { SiteNav } from "@/components/site-nav";
 
+
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -54,8 +55,11 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div>
-            <Link href="/jobs/new" className="btn btn-primary btn-sm">
-              <svg className="mr-1.5 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <Link
+              href="/jobs/new"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 transition-all active:translate-y-px"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               Create Job
@@ -71,7 +75,10 @@ export default async function DashboardPage() {
               </span>
               <p className="mt-4 text-base font-semibold text-zinc-900">No jobs yet</p>
               <p className="mx-auto mt-1 max-w-lg text-sm text-zinc-500">Create your first scheduled prompt to start automation.</p>
-              <Link href="/jobs/new" className="btn btn-primary mt-4">
+              <Link
+                href="/jobs/new"
+                className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 transition-all active:translate-y-px"
+              >
                 Create Job
               </Link>
             </div>
@@ -94,10 +101,16 @@ export default async function DashboardPage() {
                         <p className="text-xs text-zinc-500">next run {format(job.nextRunAt, "PPp")} · {job.enabled ? "enabled" : "disabled"}</p>
                       </div>
                       <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1">
-                        <Link href={`/jobs/${job.id}/edit`} className="btn btn-ghost btn-sm">
+                        <Link
+                          href={`/jobs/${job.id}/edit`}
+                          className="inline-flex items-center justify-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                        >
                           Edit
                         </Link>
-                        <Link href={`/jobs/${job.id}/history`} className="btn btn-ghost btn-sm">
+                        <Link
+                          href={`/jobs/${job.id}/history`}
+                          className="inline-flex items-center justify-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                        >
                           History
                         </Link>
                       </div>

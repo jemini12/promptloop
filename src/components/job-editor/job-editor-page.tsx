@@ -149,11 +149,21 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
         <p className="mt-1 text-xs text-zinc-500">Save to apply updates and keep this schedule active.</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={save} className="btn btn-primary" disabled={!canSave}>
+        <button
+          type="button"
+          onClick={save}
+          className="inline-flex items-center justify-center rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          disabled={!canSave}
+        >
           {saving ? "Saving..." : "Save Job"}
         </button>
         {jobId ? (
-          <button type="button" onClick={remove} className="btn btn-danger" disabled={saving || deleting}>
+          <button
+            type="button"
+            onClick={remove}
+            className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-900 hover:bg-red-100 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+            disabled={saving || deleting}
+          >
             {deleting ? "Deleting..." : "Delete Job"}
           </button>
         ) : null}

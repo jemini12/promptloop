@@ -35,7 +35,7 @@ export function SignInButtons({ callbackUrl }: { callbackUrl: string }) {
     <div className="space-y-2" aria-live="polite">
       <button
         onClick={() => onProviderSignIn("google")}
-        className="btn btn-primary w-full"
+        className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
         disabled={pendingProvider !== null}
         aria-busy={pendingProvider === "google"}
       >
@@ -65,7 +65,7 @@ export function SignInButtons({ callbackUrl }: { callbackUrl: string }) {
       </button>
       <button
         onClick={() => onProviderSignIn("github")}
-        className="btn btn-secondary w-full"
+        className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm hover:bg-zinc-100 disabled:opacity-50 disabled:pointer-events-none transition-colors"
         disabled={pendingProvider !== null}
         aria-busy={pendingProvider === "github"}
       >
@@ -84,7 +84,7 @@ export function SignInButtons({ callbackUrl }: { callbackUrl: string }) {
       </button>
       <button
         onClick={() => onProviderSignIn("discord")}
-        className="btn btn-secondary w-full"
+        className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm hover:bg-zinc-100 disabled:opacity-50 disabled:pointer-events-none transition-colors"
         disabled={pendingProvider !== null}
         aria-busy={pendingProvider === "discord"}
       >

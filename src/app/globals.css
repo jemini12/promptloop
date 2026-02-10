@@ -39,75 +39,7 @@ button {
 }
 
 @layer components {
-  .btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  }
 
-  .btn:active {
-    transform: translateY(1px);
-    box-shadow: none;
-  }
-
-  .btn-sm {
-    @apply px-2.5 py-1.5 text-xs;
-  }
-
-  .btn-primary {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: #fff;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
-  }
-
-  .btn-primary:hover {
-    background: var(--primary-hover);
-    border-color: var(--primary-hover);
-    box-shadow: 0 4px 12px rgba(24, 24, 27, 0.15); /* Subtle lift */
-    transform: translateY(-0.5px);
-  }
-
-  .btn-primary:active {
-    transform: translateY(1px);
-    box-shadow: none;
-  }
-
-  .btn-secondary {
-    background: var(--surface);
-    border-color: #e4e4e7; /* lighter border */
-    color: #3f3f46;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-  }
-
-  .btn-secondary:hover {
-    background: #fafafa;
-    border-color: #d4d4d8;
-    color: #18181b;
-  }
-
-  .btn-danger {
-    border-color: #fecdd3;
-    background: #fff1f2;
-    color: #9f1239;
-  }
-
-  .btn-danger:hover {
-    border-color: #fda4af;
-    background: #ffe4e6;
-    color: #881337;
-  }
-
-  .btn-ghost {
-    background: transparent;
-    border-color: transparent;
-    color: #52525b;
-    box-shadow: none;
-  }
-
-  .btn-ghost:hover {
-    background: #f4f4f5;
-    color: #18181b;
-  }
 
   .page-shell {
     @apply min-h-screen bg-white;
@@ -122,9 +54,9 @@ button {
     border-color: var(--border);
     background: var(--surface);
     /* Minimal shadow, relies mostly on border */
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02); 
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
   }
-  
+
   .surface-card:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
   }
@@ -160,7 +92,8 @@ button {
   .input-base:focus {
     outline: none;
     border-color: #18181b;
-    box-shadow: 0 0 0 1px #18181b; /* Sharp focus ring */
+    box-shadow: 0 0 0 1px #18181b;
+    /* Sharp focus ring */
     transform: translateY(-0.5px);
   }
 
@@ -169,21 +102,30 @@ button {
   }
 
   .status-pill-success {
-    border-color: #bbf7d0; /* green-200 */
-    background: #f0fdf4; /* green-50 */
-    color: #15803d; /* green-700 */
+    border-color: #bbf7d0;
+    /* green-200 */
+    background: #f0fdf4;
+    /* green-50 */
+    color: #15803d;
+    /* green-700 */
   }
 
   .status-pill-fail {
-    border-color: #fecdd3; /* red-200 */
-    background: #fef2f2; /* red-50 */
-    color: #b91c1c; /* red-700 */
+    border-color: #fecdd3;
+    /* red-200 */
+    background: #fef2f2;
+    /* red-50 */
+    color: #b91c1c;
+    /* red-700 */
   }
 
   .status-pill-neutral {
-    border-color: #e4e4e7; /* zinc-200 */
-    background: #fafafa; /* zinc-50 */
-    color: #52525b; /* zinc-600 */
+    border-color: #e4e4e7;
+    /* zinc-200 */
+    background: #fafafa;
+    /* zinc-50 */
+    color: #52525b;
+    /* zinc-600 */
   }
 
   .line-clamp-2 {
@@ -214,6 +156,7 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

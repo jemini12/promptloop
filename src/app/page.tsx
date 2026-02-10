@@ -32,10 +32,16 @@ export default async function LandingPage() {
             Discord or Telegram.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Link href={primaryHref} className="btn btn-primary">
+            <Link
+              href={primaryHref}
+              className="inline-flex items-center justify-center rounded-lg border border-transparent bg-zinc-900 px-5 py-3 text-base font-medium text-white shadow-sm hover:bg-zinc-800 transition-all active:translate-y-px"
+            >
               {primaryLabel}
             </Link>
-            <Link href={secondaryHref} className="btn btn-secondary">
+            <Link
+              href={secondaryHref}
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-5 py-3 text-base font-medium text-zinc-900 shadow-sm hover:bg-zinc-100 transition-all active:translate-y-px"
+            >
               {secondaryLabel}
             </Link>
           </div>
