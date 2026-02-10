@@ -47,6 +47,12 @@
   - `Dockerfile` (web)
   - `worker/Dockerfile`
   - `docker-compose.yml` (db/web/worker)
+- **UI/UX Polish (2026-02-10)**:
+  - Global "Notion-like" styling (flat shadows, sharp inputs, rounded-lg buttons).
+  - Navbar: simplified, text-link auth buttons, icons added.
+  - Dashboard: "Create Job" button added to header.
+  - New Job Page: "Back" link removed, "Use example" enhanced with Clear button.
+  - Sign Out: Dedicated `/signout` route implementation.
 
 ## In Place and Verified
 

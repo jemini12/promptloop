@@ -387,3 +387,9 @@ Auth: - OAuth 로그인 (Google, GitHub, Discord) - 자체 비밀번호
 -   소셜 로그인에서 Telegram 로그인은 제거됨(요청 반영).
 -   Telegram은 전송 채널로만 유지됨.
 -   배포 경로는 Vercel 외에 Docker Compose 로컬/VM 경로도 추가됨.
+-   **UI/UX 개선 (2026-02-10)**:
+    -   Notion-like Minimal 스타일 강화 (그림자 제거, 라인 위주).
+    -   Navbar: 텍스트 링크 기반 인증(Sign in/out), 중복 버튼 제거.
+    -   Sign Out: 별도 `/signout` 라우트를 통해 안정적인 로그아웃 처리.
+    -   Dashboard: 헤더에 'Create Job' 버튼 추가.
+    -   Job Editor: 'Back' 링크 제거, 'Use example'/'Clear' 편의 버튼 추가.
