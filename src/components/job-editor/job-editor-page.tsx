@@ -11,6 +11,7 @@ import {
   JobPromptSection,
   JobScheduleSection,
 } from "@/components/job-editor/sections";
+import { uiText } from "@/content/ui-text";
 import type { JobFormState } from "@/types/job-form";
 
 function getSaveValidationMessage(state: JobFormState): string | null {
@@ -102,14 +103,14 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
 
       if (!response.ok) {
         const data = (await response.json()) as { error?: string };
-        setError(data.error ?? "Failed to save job.");
+        setError(data.error ?? uiText.jobEditor.actions.saveError);
         return;
       }
 
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Network error while saving job.");
+      setError(uiText.jobEditor.actions.saveNetworkError);
     } finally {
       setSaving(false);
     }
@@ -120,7 +121,7 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
       return;
     }
 
-    const confirmed = window.confirm("Delete this job? This cannot be undone.");
+    const confirmed = window.confirm(uiText.jobEditor.actions.confirmDelete);
     if (!confirmed) {
       return;
     }
@@ -130,13 +131,13 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
     try {
       const response = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
       if (!response.ok) {
-        setError("Failed to delete job.");
+        setError(uiText.jobEditor.actions.deleteError);
         return;
       }
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Network error while deleting job.");
+      setError(uiText.jobEditor.actions.deleteNetworkError);
     } finally {
       setDeleting(false);
     }
@@ -145,8 +146,8 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
   return (
     <section className="surface-card">
       <div className="mb-3">
-        <h3 className="text-sm font-medium text-zinc-900">Actions</h3>
-        <p className="mt-1 text-xs text-zinc-500">Save to apply updates and keep this schedule active.</p>
+        <h3 className="text-sm font-medium text-zinc-900">{uiText.jobEditor.actions.title}</h3>
+        <p className="mt-1 text-xs text-zinc-500">{uiText.jobEditor.actions.description}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         <button
@@ -155,7 +156,7 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
           className="inline-flex items-center justify-center rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
           disabled={!canSave}
         >
-          {saving ? "Saving..." : "Save Job"}
+          {saving ? uiText.jobEditor.actions.saving : uiText.jobEditor.actions.save}
         </button>
         {jobId ? (
           <button
@@ -164,7 +165,7 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
             className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-900 hover:bg-red-100 disabled:opacity-50 disabled:pointer-events-none transition-colors"
             disabled={saving || deleting}
           >
-            {deleting ? "Deleting..." : "Delete Job"}
+            {deleting ? uiText.jobEditor.actions.deleting : uiText.jobEditor.actions.delete}
           </button>
         ) : null}
       </div>
@@ -178,9 +179,9 @@ function JobEditorBody({ jobId }: { jobId?: string }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 py-10">
       <section className="surface-card bg-zinc-50/70">
-        <h1 className="text-xl font-semibold text-zinc-900">{jobId ? "Edit Job" : "Create Job"}</h1>
+        <h1 className="text-xl font-semibold text-zinc-900">{jobId ? uiText.jobEditor.page.editTitle : uiText.jobEditor.page.createTitle}</h1>
         <p className="mt-1 text-sm text-zinc-600">
-          Configure prompt, schedule, and channel settings. Run preview before saving.
+          {uiText.jobEditor.page.description}
         </p>
       </section>
       <JobHeaderSection />

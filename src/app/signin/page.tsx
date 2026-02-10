@@ -4,10 +4,11 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth-options";
 import { SiteNav } from "@/components/site-nav";
 import { SignInButtons } from "@/components/signin-buttons";
+import { uiText } from "@/content/ui-text";
 
 export const metadata: Metadata = {
   title: "Sign In",
-  description: "Sign in to create, schedule, and manage your Promptly automation jobs.",
+  description: uiText.signIn.page.description,
 };
 
 type Props = {
@@ -29,8 +30,8 @@ export default async function SignInPage({ searchParams }: Props) {
       <SiteNav signedIn={signedIn} />
       <section className="content-shell flex min-h-[calc(100vh-57px)] items-center py-10">
         <div className="surface-card mx-auto w-full max-w-md">
-          <h1 className="text-2xl font-semibold text-zinc-900">Sign in</h1>
-          <p className="mt-1 text-sm text-zinc-500">Choose a social provider to access your scheduled jobs.</p>
+          <h1 className="text-2xl font-semibold text-zinc-900">{uiText.signIn.page.title}</h1>
+          <p className="mt-1 text-sm text-zinc-500">{uiText.signIn.page.description}</p>
           <div className="mt-4">
             <SignInButtons callbackUrl={callbackUrl} />
           </div>

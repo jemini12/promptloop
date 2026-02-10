@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { uiText } from "@/content/ui-text";
 
 function navItemClass(active: boolean) {
   return active
@@ -20,7 +21,7 @@ export function SiteNav({ signedIn }: { signedIn: boolean }) {
     <header className="sticky top-0 z-30 border-b border-zinc-200/80 bg-[color:var(--bg-soft)]/92 backdrop-blur">
       <div className="content-shell flex flex-wrap items-center justify-between gap-2 py-3">
         <Link href="/" className="inline-flex items-center text-lg font-semibold text-zinc-900">
-          Promptly
+          {uiText.brand.name}
         </Link>
 
         <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
@@ -30,7 +31,7 @@ export function SiteNav({ signedIn }: { signedIn: boolean }) {
               className={navItemClass(isActivePath(pathname, "/help"))}
               aria-current={isActivePath(pathname, "/help") ? "page" : undefined}
             >
-              Help
+              {uiText.nav.help}
             </Link>
             {signedIn ? (
               <Link
@@ -38,7 +39,7 @@ export function SiteNav({ signedIn }: { signedIn: boolean }) {
                 className={navItemClass(isActivePath(pathname, "/dashboard"))}
                 aria-current={isActivePath(pathname, "/dashboard") ? "page" : undefined}
               >
-                Dashboard
+                {uiText.nav.dashboard}
               </Link>
             ) : null}
 
@@ -47,7 +48,7 @@ export function SiteNav({ signedIn }: { signedIn: boolean }) {
                 className={navItemClass(isActivePath(pathname, "/signin"))}
                 aria-current={isActivePath(pathname, "/signin") ? "page" : undefined}
               >
-                Sign in
+                {uiText.nav.signIn}
               </Link>
             ) : null}
             {signedIn ? (
@@ -56,7 +57,7 @@ export function SiteNav({ signedIn }: { signedIn: boolean }) {
                 className={navItemClass(isActivePath(pathname, "/signout"))}
                 aria-current={isActivePath(pathname, "/signout") ? "page" : undefined}
               >
-                Sign out
+                {uiText.nav.signOut}
               </Link>
             ) : null}
           </nav>
