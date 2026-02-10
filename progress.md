@@ -48,11 +48,16 @@
   - `worker/Dockerfile`
   - `docker-compose.yml` (db/web/worker)
 - **UI/UX Polish (2026-02-10)**:
-  - Global "Notion-like" styling (flat shadows, sharp inputs, rounded-lg buttons).
-  - Navbar: simplified, text-link auth buttons, icons added.
+  - Global "Notion-like" styling (flat shadows, sharp inputs, compact minimal buttons).
+  - Navbar: simplified text-link auth navigation (Sign in/out), redundant button-style auth controls removed.
   - Dashboard: "Create Job" button added to header.
   - New Job Page: "Back" link removed, "Use example" enhanced with Clear button.
   - Sign Out: Dedicated `/signout` route implementation.
+  - Edit Job Page: top-level back link removed for cleaner editor flow.
+- **Copy Management Refactor (2026-02-11)**:
+  - Centralized UI descriptions and CTA/button labels into `src/content/ui-text.ts`.
+  - Landing, Dashboard, Help, Sign In, Navbar, and Job Editor now consume shared copy keys.
+  - Reduces string duplication and makes future copy updates one-file changes.
 
 ## In Place and Verified
 

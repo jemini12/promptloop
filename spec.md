@@ -395,3 +395,4 @@ Auth: - OAuth 로그인 (Google, GitHub, Discord) - 자체 비밀번호
     -   Job Editor: 'Back' 링크 제거, 'Use example'/'Clear' 편의 버튼 추가.
     -   Landing/Help CTA를 `text-sm`/`text-xs` 중심의 작고 깔끔한 버튼으로 통일.
     -   (2026-02-11) Edit Job 페이지 상단 Back 링크 제거로 Job Editor 진입 흐름 단순화.
+    -   (2026-02-11) UI 문구/버튼 텍스트를 `src/content/ui-text.ts`로 중앙화하여 유지보수성 개선.
