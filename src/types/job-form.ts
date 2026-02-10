@@ -8,7 +8,16 @@ export type JobFormState = {
   cron?: string;
   channel:
     | { type: "discord"; config: { webhookUrl: string } }
-    | { type: "telegram"; config: { botToken: string; chatId: string } };
+    | { type: "telegram"; config: { botToken: string; chatId: string } }
+    | {
+        type: "webhook";
+        config: {
+          url: string;
+          method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+          headers: string;
+          payload: string;
+        };
+      };
   enabled: boolean;
   preview: {
     loading: boolean;

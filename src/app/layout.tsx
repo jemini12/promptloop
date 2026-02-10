@@ -13,8 +13,23 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Promptly",
-  description: "Prompt Scheduler MVP",
+  title: {
+    default: "Promptly",
+    template: "%s | Promptly",
+  },
+  description: "Schedule AI prompts, preview output, and deliver automated results to Discord or Telegram.",
+  applicationName: "Promptly",
+  keywords: ["AI automation", "prompt scheduler", "Discord", "Telegram", "workflow"],
+  openGraph: {
+    title: "Promptly",
+    description: "Run AI prompts on your schedule and deliver results automatically.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Promptly",
+    description: "Schedule AI prompts and deliver output automatically.",
+  },
 };
 
 export default function RootLayout({

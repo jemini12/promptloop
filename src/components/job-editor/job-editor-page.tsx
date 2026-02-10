@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { JobFormProvider, useJobForm } from "@/components/job-editor/job-form-provider";
 import {
@@ -12,11 +13,71 @@ import {
 } from "@/components/job-editor/sections";
 import type { JobFormState } from "@/types/job-form";
 
+function getSaveValidationMessage(state: JobFormState): string | null {
+  if (!state.name.trim()) {
+    return "Job name is required.";
+  }
+  if (!state.prompt.trim()) {
+    return "Prompt is required.";
+  }
+
+  if (state.scheduleType !== "cron" && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(state.time)) {
+    return "Schedule time must be in HH:mm format.";
+  }
+
+  if (state.scheduleType === "cron" && !state.cron?.trim()) {
+    return "Cron expression is required.";
+  }
+
+  if (state.channel.type === "discord") {
+    if (!state.channel.config.webhookUrl.trim()) {
+      return "Discord webhook URL is required.";
+    }
+    return null;
+  }
+
+  if (state.channel.type === "telegram") {
+    if (!state.channel.config.botToken.trim() || !state.channel.config.chatId.trim()) {
+      return "Telegram bot token and chat ID are required.";
+    }
+    return null;
+  }
+
+  if (!state.channel.config.url.trim()) {
+    return "Webhook URL is required.";
+  }
+
+  if (state.channel.config.headers.trim()) {
+    try {
+      JSON.parse(state.channel.config.headers);
+    } catch {
+      return "Webhook headers must be valid JSON.";
+    }
+  }
+
+  if (state.channel.config.payload.trim()) {
+    try {
+      JSON.parse(state.channel.config.payload);
+    } catch {
+      return "Webhook payload must be valid JSON.";
+    }
+  }
+
+  return null;
+}
+
 function JobActionsSection({ jobId }: { jobId?: string }) {
   const { state } = useJobForm();
   const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const validationMessage = getSaveValidationMessage(state);
+  const canSave = !validationMessage && !saving && !deleting;
 
   async function save() {
+    setSaving(true);
+    setError(null);
     const body = {
       name: state.name,
       prompt: state.prompt,
@@ -31,47 +92,74 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
 
     const endpoint = jobId ? `/api/jobs/${jobId}` : "/api/jobs";
     const method = jobId ? "PUT" : "POST";
-    const response = await fetch(endpoint, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
 
-    if (!response.ok) {
-      const data = (await response.json()) as { error?: string };
-      alert(data.error ?? "Save failed");
-      return;
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json()) as { error?: string };
+        setError(data.error ?? "Failed to save job.");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Network error while saving job.");
+    } finally {
+      setSaving(false);
     }
-
-    router.push("/");
-    router.refresh();
   }
 
   async function remove() {
     if (!jobId) {
       return;
     }
-    const response = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
-    if (!response.ok) {
-      alert("Delete failed");
+
+    const confirmed = window.confirm("Delete this job? This cannot be undone.");
+    if (!confirmed) {
       return;
     }
-    router.push("/");
-    router.refresh();
+
+    setDeleting(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
+      if (!response.ok) {
+        setError("Failed to delete job.");
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Network error while deleting job.");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5">
+    <section className="surface-card">
+      <div className="mb-3">
+        <h3 className="text-sm font-medium text-zinc-900">Actions</h3>
+        <p className="mt-1 text-xs text-zinc-500">Save to apply updates and keep this schedule active.</p>
+      </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={save} className="rounded-lg bg-black px-4 py-2 text-sm text-white">
-          Save
+        <button type="button" onClick={save} className="btn btn-primary" disabled={!canSave}>
+          {saving ? "Saving..." : "Save Job"}
         </button>
         {jobId ? (
-          <button type="button" onClick={remove} className="rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-700">
-            Delete
+          <button type="button" onClick={remove} className="btn btn-danger" disabled={saving || deleting}>
+            {deleting ? "Deleting..." : "Delete Job"}
           </button>
         ) : null}
       </div>
+      {validationMessage ? <p className="mt-3 text-xs text-zinc-500">{validationMessage}</p> : null}
+      {error ? <p className="mt-3 text-xs text-red-600" role="alert">{error}</p> : null}
     </section>
   );
 }
@@ -79,6 +167,12 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
 function JobEditorBody({ jobId }: { jobId?: string }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 py-10">
+      <section className="surface-card bg-zinc-50/70">
+        <h1 className="text-xl font-semibold text-zinc-900">{jobId ? "Edit Job" : "Create Job"}</h1>
+        <p className="mt-1 text-sm text-zinc-600">
+          Configure prompt, schedule, and channel settings. Run preview before saving.
+        </p>
+      </section>
       <JobHeaderSection />
       <JobPromptSection />
       <JobOptionsSection />

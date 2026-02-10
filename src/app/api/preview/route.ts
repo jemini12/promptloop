@@ -24,12 +24,24 @@ export async function POST(request: NextRequest) {
           title,
           result.output,
         );
-      } else {
+      } else if (payload.channel.type === "telegram") {
         await sendChannelMessage(
           {
             type: "telegram",
             botToken: payload.channel.config.botToken,
             chatId: payload.channel.config.chatId,
+          },
+          title,
+          result.output,
+        );
+      } else {
+        await sendChannelMessage(
+          {
+            type: "webhook",
+            url: payload.channel.config.url,
+            method: payload.channel.config.method,
+            headers: payload.channel.config.headers,
+            payload: payload.channel.config.payload,
           },
           title,
           result.output,

@@ -1,6 +1,13 @@
 type SendChannelInput =
   | { type: "discord"; webhookUrl: string }
-  | { type: "telegram"; botToken: string; chatId: string };
+  | { type: "telegram"; botToken: string; chatId: string }
+  | {
+      type: "webhook";
+      url: string;
+      method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+      headers: string;
+      payload: string;
+    };
 
 const DISCORD_MAX = 1900;
 const TELEGRAM_MAX = 4000;
@@ -31,6 +38,23 @@ export async function sendChannelMessage(channel: SendChannelInput, title: strin
       if (!res.ok) {
         throw new Error(`Discord webhook failed: ${res.status}`);
       }
+    }
+    return;
+  }
+
+  if (channel.type === "webhook") {
+    const headers = channel.headers.trim() ? JSON.parse(channel.headers) : {};
+    const payload = channel.payload.trim() ? JSON.parse(channel.payload) : { content: text };
+    const res = await fetch(channel.url, {
+      method: channel.method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(headers as Record<string, string>),
+      },
+      body: channel.method === "GET" ? undefined : JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      throw new Error(`Webhook failed: ${res.status}`);
     }
     return;
   }

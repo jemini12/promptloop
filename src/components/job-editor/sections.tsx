@@ -4,7 +4,7 @@ import cronstrue from "cronstrue";
 import { useState } from "react";
 import { useJobForm } from "@/components/job-editor/job-form-provider";
 
-const sectionClass = "rounded-xl border border-zinc-200 bg-white p-5";
+const sectionClass = "surface-card";
 const dayOptions = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function describeCron(expression: string) {
@@ -24,11 +24,15 @@ export function JobHeaderSection() {
 
   return (
     <section className={sectionClass}>
-      <label className="text-sm font-medium text-zinc-900">Job Name</label>
+      <label className="field-label" htmlFor="job-name">
+        Job Name
+      </label>
+      <p className="field-help">Use a name that helps you quickly identify this workflow.</p>
       <input
+        id="job-name"
         value={state.name}
         onChange={(event) => setState((prev) => ({ ...prev, name: event.target.value }))}
-        className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+        className="input-base mt-2"
         placeholder="Morning market brief"
       />
     </section>
@@ -41,24 +45,43 @@ export function JobPromptSection() {
   return (
     <section className={sectionClass}>
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-zinc-900">Prompt</label>
-        <button
-          type="button"
-          onClick={() =>
-            setState((prev) => ({
-              ...prev,
-              prompt: "Summarize top AI news in 5 bullets with one contrarian insight.",
-            }))
-          }
-          className="text-xs text-zinc-600 underline"
-        >
-          Use example
-        </button>
+        <label className="field-label" htmlFor="job-prompt">
+          Prompt
+        </label>
+        <div className="flex items-center gap-2">
+          {state.prompt ? (
+            <button
+              type="button"
+              onClick={() => setState((prev) => ({ ...prev, prompt: "" }))}
+              className="btn btn-ghost btn-xs text-zinc-500 hover:text-red-600"
+              aria-label="Clear prompt"
+            >
+              Clear
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() =>
+              setState((prev) => ({
+                ...prev,
+                prompt: "Summarize top AI news in 5 bullets with one contrarian insight.",
+              }))
+            }
+            className="btn btn-secondary btn-xs"
+          >
+            <svg className="mr-1 h-3 w-3 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+            </svg>
+            Use example
+          </button>
+        </div>
       </div>
+      <p className="field-help">Describe the exact format and outcome you want from the model.</p>
       <textarea
+        id="job-prompt"
         value={state.prompt}
         onChange={(event) => setState((prev) => ({ ...prev, prompt: event.target.value }))}
-        className="mt-2 h-44 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+        className="input-base mt-2 h-44 resize-y"
         placeholder="Write your prompt"
       />
     </section>
@@ -70,14 +93,25 @@ export function JobOptionsSection() {
 
   return (
     <section className={sectionClass}>
-      <label className="inline-flex items-center gap-2 text-sm text-zinc-900">
-        <input
-          type="checkbox"
-          checked={state.allowWebSearch}
-          onChange={(event) => setState((prev) => ({ ...prev, allowWebSearch: event.target.checked }))}
-        />
-        Allow web search (OpenAI web search tool)
-      </label>
+      <h3 className="field-label">Options</h3>
+      <div className="mt-3 grid gap-2">
+        <label className="inline-flex items-center gap-2 text-sm text-zinc-900">
+          <input
+            type="checkbox"
+            checked={state.allowWebSearch}
+            onChange={(event) => setState((prev) => ({ ...prev, allowWebSearch: event.target.checked }))}
+          />
+          Allow web search (OpenAI web search tool)
+        </label>
+        <label className="inline-flex items-center gap-2 text-sm text-zinc-900">
+          <input
+            type="checkbox"
+            checked={state.enabled}
+            onChange={(event) => setState((prev) => ({ ...prev, enabled: event.target.checked }))}
+          />
+          Keep this job enabled after save
+        </label>
+      </div>
     </section>
   );
 }
@@ -88,13 +122,15 @@ export function JobScheduleSection() {
   return (
     <section className={sectionClass}>
       <h3 className="text-sm font-medium text-zinc-900">Schedule</h3>
+      <p className="field-help">Choose how often this prompt runs.</p>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <select
+          aria-label="Schedule type"
           value={state.scheduleType}
           onChange={(event) =>
             setState((prev) => ({ ...prev, scheduleType: event.target.value as "daily" | "weekly" | "cron" }))
           }
-          className="h-10 rounded-lg border border-zinc-200 px-3 text-sm"
+          className="input-base h-10"
         >
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
@@ -102,17 +138,20 @@ export function JobScheduleSection() {
         </select>
         {state.scheduleType !== "cron" ? (
           <input
+            type="time"
+            aria-label="Schedule time"
             value={state.time}
             onChange={(event) => setState((prev) => ({ ...prev, time: event.target.value }))}
-            className="rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+            className="input-base"
             placeholder="09:00"
           />
         ) : null}
         {state.scheduleType === "weekly" ? (
           <select
+            aria-label="Weekly day"
             value={state.dayOfWeek ?? 1}
             onChange={(event) => setState((prev) => ({ ...prev, dayOfWeek: Number(event.target.value) }))}
-            className="h-10 rounded-lg border border-zinc-200 px-3 text-sm"
+            className="input-base h-10"
           >
             {dayOptions.map((label, index) => (
               <option key={label} value={index} className="h-10">
@@ -123,9 +162,10 @@ export function JobScheduleSection() {
         ) : state.scheduleType === "cron" ? (
           <div className="sm:col-span-2">
             <input
+              aria-label="Cron expression"
               value={state.cron ?? ""}
               onChange={(event) => setState((prev) => ({ ...prev, cron: event.target.value }))}
-              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+              className="input-base"
               placeholder="0 9 * * *"
             />
             <p className="mt-2 text-xs text-zinc-500">{describeCron(state.cron ?? "")}</p>
@@ -142,23 +182,37 @@ export function JobChannelSection() {
   return (
     <section className={sectionClass}>
       <h3 className="text-sm font-medium text-zinc-900">Channel</h3>
+      <p className="field-help">Pick where completed outputs should be delivered.</p>
       <select
+        aria-label="Delivery channel"
         value={state.channel.type}
         onChange={(event) => {
           if (event.target.value === "discord") {
             setState((prev) => ({ ...prev, channel: { type: "discord", config: { webhookUrl: "" } } }));
             return;
           }
+          if (event.target.value === "webhook") {
+            setState((prev) => ({
+              ...prev,
+              channel: {
+                type: "webhook",
+                config: { url: "", method: "POST", headers: "", payload: "" },
+              },
+            }));
+            return;
+          }
           setState((prev) => ({ ...prev, channel: { type: "telegram", config: { botToken: "", chatId: "" } } }));
         }}
-        className="mt-2 h-10 rounded-lg border border-zinc-200 px-3 text-sm"
+        className="input-base mt-2 h-10"
       >
         <option value="discord">Discord</option>
         <option value="telegram">Telegram</option>
+        <option value="webhook">Custom Webhook</option>
       </select>
 
       {state.channel.type === "discord" ? (
         <input
+          aria-label="Discord webhook URL"
           value={state.channel.config.webhookUrl}
           onChange={(event) =>
             setState((prev) => ({
@@ -166,12 +220,13 @@ export function JobChannelSection() {
               channel: { type: "discord", config: { webhookUrl: event.target.value } },
             }))
           }
-          className="mt-3 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+          className="input-base mt-3"
           placeholder="Discord Webhook URL"
         />
-      ) : (
+      ) : state.channel.type === "telegram" ? (
         <div className="mt-3 grid gap-2">
           <input
+            aria-label="Telegram bot token"
             value={state.channel.config.botToken}
             onChange={(event) =>
               setState((prev) => ({
@@ -185,10 +240,11 @@ export function JobChannelSection() {
                 },
               }))
             }
-            className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+            className="input-base"
             placeholder="Telegram Bot Token"
           />
           <input
+            aria-label="Telegram chat ID"
             value={state.channel.config.chatId}
             onChange={(event) =>
               setState((prev) => ({
@@ -202,8 +258,96 @@ export function JobChannelSection() {
                 },
               }))
             }
-            className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+            className="input-base"
             placeholder="Telegram Chat ID"
+          />
+        </div>
+      ) : (
+        <div className="mt-3 grid gap-2">
+          <input
+            aria-label="Webhook URL"
+            value={state.channel.config.url}
+            onChange={(event) =>
+              setState((prev) => ({
+                ...prev,
+                channel: {
+                  type: "webhook",
+                  config: {
+                    ...(prev.channel.type === "webhook"
+                      ? prev.channel.config
+                      : { method: "POST", headers: "", payload: "" }),
+                    url: event.target.value,
+                  },
+                },
+              }))
+            }
+            className="input-base"
+            placeholder="Custom Webhook URL"
+          />
+          <select
+            aria-label="Webhook method"
+            value={state.channel.config.method}
+            onChange={(event) =>
+              setState((prev) => ({
+                ...prev,
+                channel: {
+                  type: "webhook",
+                  config: {
+                    ...(prev.channel.type === "webhook"
+                      ? prev.channel.config
+                      : { url: "", headers: "", payload: "" }),
+                    method: event.target.value as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+                  },
+                },
+              }))
+            }
+            className="input-base h-10"
+          >
+            <option value="POST">POST</option>
+            <option value="GET">GET</option>
+            <option value="PUT">PUT</option>
+            <option value="PATCH">PATCH</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+          <textarea
+            aria-label="Webhook headers JSON"
+            value={state.channel.config.headers}
+            onChange={(event) =>
+              setState((prev) => ({
+                ...prev,
+                channel: {
+                  type: "webhook",
+                  config: {
+                    ...(prev.channel.type === "webhook"
+                      ? prev.channel.config
+                      : { url: "", method: "POST", payload: "" }),
+                    headers: event.target.value,
+                  },
+                },
+              }))
+            }
+            className="input-base h-24"
+            placeholder='Headers JSON, e.g. {"Authorization":"Bearer token","X-API-Key":"your-key"}'
+          />
+          <textarea
+            aria-label="Webhook payload JSON"
+            value={state.channel.config.payload}
+            onChange={(event) =>
+              setState((prev) => ({
+                ...prev,
+                channel: {
+                  type: "webhook",
+                  config: {
+                    ...(prev.channel.type === "webhook"
+                      ? prev.channel.config
+                      : { url: "", method: "POST", headers: "" }),
+                    payload: event.target.value,
+                  },
+                },
+              }))
+            }
+            className="input-base h-28"
+            placeholder='Payload JSON (optional), e.g. {"content":"hello"}'
           />
         </div>
       )}
@@ -276,7 +420,7 @@ export function JobPreviewSection() {
           type="button"
           onClick={preview}
           disabled={state.preview.loading}
-          className="rounded-lg bg-black px-3 py-2 text-xs text-white disabled:opacity-60"
+          className="btn btn-primary btn-sm"
         >
           {state.preview.loading ? "Running..." : "Run preview"}
         </button>
@@ -285,8 +429,15 @@ export function JobPreviewSection() {
         <input type="checkbox" checked={testSend} onChange={(event) => setTestSend(event.target.checked)} />
         Send test message to selected channel
       </label>
-      <pre className="mt-3 min-h-24 whitespace-pre-wrap rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700">
-        {state.preview.status === "success" ? state.preview.output : state.preview.errorMessage || "No preview yet"}
+      <pre
+        className="mt-3 min-h-24 max-h-80 overflow-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700"
+        aria-live="polite"
+      >
+        {state.preview.status === "success"
+          ? state.preview.output
+          : state.preview.status === "fail"
+            ? state.preview.errorMessage
+            : "No preview yet. Run preview to validate output before saving."}
       </pre>
     </section>
   );

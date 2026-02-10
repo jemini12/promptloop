@@ -29,6 +29,7 @@ enum ScheduleType {
 enum ChannelType {
   discord
   telegram
+  webhook
 }
 
 enum RunStatus {

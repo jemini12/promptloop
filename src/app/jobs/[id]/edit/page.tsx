@@ -1,9 +1,18 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { decryptString } from "@/lib/crypto";
 import { JobEditorPage } from "@/components/job-editor/job-editor-page";
+import { SiteNav } from "@/components/site-nav";
+
+export const metadata: Metadata = {
+  title: "Edit Job",
+  description: "Update prompt, schedule, and delivery settings for an existing job.",
+};
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -12,7 +21,7 @@ export const dynamic = "force-dynamic";
 export default async function EditJobPage({ params }: Params) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    notFound();
+    redirect("/signin?callbackUrl=/dashboard");
   }
 
   const { id } = await params;
@@ -29,6 +38,16 @@ export default async function EditJobPage({ params }: Params) {
             webhookUrl: decryptString((job.channelConfig as { webhookUrlEnc: string }).webhookUrlEnc),
           },
         }
+      : job.channelType === "webhook"
+        ? {
+            type: "webhook" as const,
+            config: JSON.parse(decryptString((job.channelConfig as { configEnc: string }).configEnc)) as {
+              url: string;
+              method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+              headers: string;
+              payload: string;
+            },
+          }
       : {
           type: "telegram" as const,
           config: {
@@ -38,19 +57,27 @@ export default async function EditJobPage({ params }: Params) {
         };
 
   return (
-    <JobEditorPage
-      jobId={job.id}
-      initialState={{
-        name: job.name,
-        prompt: job.prompt,
-        allowWebSearch: job.allowWebSearch,
-        scheduleType: job.scheduleType,
-        time: job.scheduleTime,
-        dayOfWeek: job.scheduleDayOfWeek ?? undefined,
-        cron: job.scheduleCron ?? "",
-        channel,
-        enabled: job.enabled,
-      }}
-    />
+    <main className="page-shell">
+      <SiteNav signedIn />
+      <section className="content-shell max-w-3xl pt-6">
+        <Link href="/dashboard" className="back-link">
+          {"<- Back to Dashboard"}
+        </Link>
+        <JobEditorPage
+          jobId={job.id}
+          initialState={{
+            name: job.name,
+            prompt: job.prompt,
+            allowWebSearch: job.allowWebSearch,
+            scheduleType: job.scheduleType,
+            time: job.scheduleTime,
+            dayOfWeek: job.scheduleDayOfWeek ?? undefined,
+            cron: job.scheduleCron ?? "",
+            channel,
+            enabled: job.enabled,
+          }}
+        />
+      </section>
+    </main>
   );
 }

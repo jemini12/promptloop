@@ -9,6 +9,30 @@ const telegramConfigSchema = z.object({
   chatId: z.string().min(1),
 });
 
+const webhookConfigSchema = z.object({
+  url: z.string().url(),
+  method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("POST"),
+  headers: z.string().default("{}"),
+  payload: z.string().default(""),
+}).superRefine((value, ctx) => {
+  try {
+    const parsedHeaders = JSON.parse(value.headers || "{}");
+    if (typeof parsedHeaders !== "object" || parsedHeaders === null || Array.isArray(parsedHeaders)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["headers"], message: "Headers must be a JSON object" });
+    }
+  } catch {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["headers"], message: "Headers must be valid JSON" });
+  }
+
+  if (value.payload.trim()) {
+    try {
+      JSON.parse(value.payload);
+    } catch {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["payload"], message: "Payload must be valid JSON" });
+    }
+  }
+});
+
 export const previewSchema = z.object({
   prompt: z.string().min(1).max(8000),
   allowWebSearch: z.boolean().default(false),
@@ -18,6 +42,7 @@ export const previewSchema = z.object({
     .discriminatedUnion("type", [
       z.object({ type: z.literal("discord"), config: discordConfigSchema }),
       z.object({ type: z.literal("telegram"), config: telegramConfigSchema }),
+      z.object({ type: z.literal("webhook"), config: webhookConfigSchema }),
     ])
     .optional(),
 });
@@ -34,6 +59,7 @@ export const jobUpsertSchema = z
     channel: z.discriminatedUnion("type", [
       z.object({ type: z.literal("discord"), config: discordConfigSchema }),
       z.object({ type: z.literal("telegram"), config: telegramConfigSchema }),
+      z.object({ type: z.literal("webhook"), config: webhookConfigSchema }),
     ]),
     enabled: z.boolean().default(true),
   })
