@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import Link from "next/link";
 import { authOptions } from "@/lib/auth-options";
 import { SiteNav } from "@/components/site-nav";
+import { LinkButton } from "@/components/ui/link-button";
 import { uiText } from "@/content/ui-text";
 
 export const dynamic = "force-dynamic";
@@ -23,18 +23,20 @@ export default async function HelpPage() {
         <p className="mt-2 text-sm text-zinc-600">{uiText.help.description}</p>
         {!signedIn ? (
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link
+            <LinkButton
               href="/signin?callbackUrl=/jobs/new"
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 transition-colors"
+              variant="primary"
+              size="sm"
             >
               {uiText.help.cta.createJob}
-            </Link>
-            <Link
+            </LinkButton>
+            <LinkButton
               href="/signin?callbackUrl=/dashboard"
-              className="inline-flex items-center justify-center rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-900 hover:bg-zinc-100 transition-colors"
+              variant="secondary"
+              size="sm"
             >
               {uiText.help.cta.viewDashboard}
-            </Link>
+            </LinkButton>
           </div>
         ) : null}
 

@@ -1,9 +1,10 @@
 "use client";
 
 import { ButtonHTMLAttributes, ReactNode } from "react";
+import { controlSizeStyles, controlVariantStyles, type ControlSize, type ControlVariant } from "@/components/ui/control-styles";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonVariant = ControlVariant;
+export type ButtonSize = ControlSize;
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -11,23 +12,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   children: ReactNode;
 }
-
-const variantStyles: Record<ButtonVariant, string> = {
-  primary:
-    "inline-flex items-center justify-center rounded-md border border-transparent bg-zinc-900 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2",
-  secondary:
-    "inline-flex items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2",
-  ghost:
-    "inline-flex items-center justify-center rounded-md border border-transparent bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2",
-  danger:
-    "inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2",
-};
-
-const sizeStyles: Record<ButtonSize, string> = {
-  sm: "px-3 py-1.5 text-xs font-medium",
-  md: "px-4 py-2 text-sm font-medium",
-  lg: "px-5 py-2.5 text-base font-medium",
-};
 
 export function Button({
   variant = "primary",
@@ -40,7 +24,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseClasses = "transition-colors disabled:opacity-50 disabled:pointer-events-none";
-  const classes = [baseClasses, variantStyles[variant], sizeStyles[size], className]
+  const classes = [baseClasses, controlVariantStyles[variant], controlSizeStyles[size], className]
     .filter(Boolean)
     .join(" ");
 

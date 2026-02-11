@@ -396,3 +396,7 @@ Auth: - OAuth 로그인 (Google, GitHub, Discord) - 자체 비밀번호
     -   Landing/Help CTA를 `text-sm`/`text-xs` 중심의 작고 깔끔한 버튼으로 통일.
     -   (2026-02-11) Edit Job 페이지 상단 Back 링크 제거로 Job Editor 진입 흐름 단순화.
     -   (2026-02-11) UI 문구/버튼 텍스트를 `src/content/ui-text.ts`로 중앙화하여 유지보수성 개선.
+    -   (2026-02-11) Link/Button 표준화 완료:
+        -   네비게이션 CTA는 `LinkButton`, 액션은 `Button`으로 의미 기반 분리.
+        -   `src/components/ui/control-styles.ts`로 크기/타이포/패딩 토큰 통합.
+        -   `scripts/check-ui-controls.sh` + `npm run check:ui-controls`로 드리프트 방지.

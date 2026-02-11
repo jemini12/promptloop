@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { prisma } from "@/lib/prisma";
 import { SiteNav } from "@/components/site-nav";
+import { LinkButton } from "@/components/ui/link-button";
 import { uiText } from "@/content/ui-text";
 
 
@@ -56,15 +57,17 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div>
-            <Link
+            <LinkButton
               href="/jobs/new"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 transition-all active:translate-y-px"
+              variant="primary"
+              size="sm"
+              className="gap-2 shadow-sm"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               {uiText.dashboard.createJob}
-            </Link>
+            </LinkButton>
           </div>
         </div>
 
@@ -76,12 +79,14 @@ export default async function DashboardPage() {
               </span>
               <p className="mt-4 text-base font-semibold text-zinc-900">{uiText.dashboard.noJobsTitle}</p>
               <p className="mx-auto mt-1 max-w-lg text-sm text-zinc-500">{uiText.dashboard.noJobsDescription}</p>
-              <Link
+              <LinkButton
                 href="/jobs/new"
-                className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 transition-all active:translate-y-px"
+                variant="primary"
+                size="md"
+                className="mt-4 gap-2 shadow-sm"
               >
                 {uiText.dashboard.createJob}
-              </Link>
+              </LinkButton>
             </div>
           ) : (
             <ul className="space-y-3">

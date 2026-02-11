@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { Button } from "@/components/ui/button";
 import { uiText } from "@/content/ui-text";
 
 export function SignInButtons({ callbackUrl }: { callbackUrl: string }) {
@@ -34,9 +35,11 @@ export function SignInButtons({ callbackUrl }: { callbackUrl: string }) {
 
   return (
     <div className="space-y-2" aria-live="polite">
-      <button
+      <Button
         onClick={() => onProviderSignIn("google")}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+        variant="primary"
+        size="md"
+        className="w-full gap-2 shadow-sm"
         disabled={pendingProvider !== null}
         aria-busy={pendingProvider === "google"}
       >
@@ -63,10 +66,12 @@ export function SignInButtons({ callbackUrl }: { callbackUrl: string }) {
           </svg>
         )}
         {pendingProvider === "google" ? uiText.signIn.providers.google.redirecting : uiText.signIn.providers.google.continue}
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={() => onProviderSignIn("github")}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm hover:bg-zinc-100 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+        variant="secondary"
+        size="md"
+        className="w-full gap-2 shadow-sm"
         disabled={pendingProvider !== null}
         aria-busy={pendingProvider === "github"}
       >
@@ -82,10 +87,12 @@ export function SignInButtons({ callbackUrl }: { callbackUrl: string }) {
           </svg>
         )}
         {pendingProvider === "github" ? uiText.signIn.providers.github.redirecting : uiText.signIn.providers.github.continue}
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={() => onProviderSignIn("discord")}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm hover:bg-zinc-100 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+        variant="secondary"
+        size="md"
+        className="w-full gap-2 shadow-sm"
         disabled={pendingProvider !== null}
         aria-busy={pendingProvider === "discord"}
       >
@@ -97,7 +104,7 @@ export function SignInButtons({ callbackUrl }: { callbackUrl: string }) {
           </svg>
         )}
         {pendingProvider === "discord" ? uiText.signIn.providers.discord.redirecting : uiText.signIn.providers.discord.continue}
-      </button>
+      </Button>
       {pendingProvider ? <p className="text-center text-xs text-zinc-500">{uiText.signIn.pending}</p> : null}
       {error ? <p className="text-center text-xs text-red-600" role="alert">{error}</p> : null}
     </div>

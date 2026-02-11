@@ -11,6 +11,7 @@ import {
   JobPromptSection,
   JobScheduleSection,
 } from "@/components/job-editor/sections";
+import { Button } from "@/components/ui/button";
 import { uiText } from "@/content/ui-text";
 import type { JobFormState } from "@/types/job-form";
 
@@ -150,23 +151,28 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
         <p className="mt-1 text-xs text-zinc-500">{uiText.jobEditor.actions.description}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button
           type="button"
           onClick={save}
-          className="inline-flex items-center justify-center rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          variant="primary"
+          size="md"
+          loading={saving}
+          className="shadow-sm"
           disabled={!canSave}
         >
           {saving ? uiText.jobEditor.actions.saving : uiText.jobEditor.actions.save}
-        </button>
+        </Button>
         {jobId ? (
-          <button
+          <Button
             type="button"
             onClick={remove}
-            className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-900 hover:bg-red-100 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+            variant="danger"
+            size="md"
+            loading={deleting}
             disabled={saving || deleting}
           >
             {deleting ? uiText.jobEditor.actions.deleting : uiText.jobEditor.actions.delete}
-          </button>
+          </Button>
         ) : null}
       </div>
       {validationMessage ? <p className="mt-3 text-xs text-zinc-500">{validationMessage}</p> : null}

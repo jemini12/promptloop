@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { SiteNav } from "@/components/site-nav";
+import { LinkButton } from "@/components/ui/link-button";
 import { uiText } from "@/content/ui-text";
 
 function CardIcon({ path }: { path: string }) {
@@ -32,18 +32,12 @@ export default async function LandingPage() {
             {uiText.landing.description}
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Link
-              href={primaryHref}
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
-            >
+            <LinkButton href={primaryHref} variant="primary" size="md">
               {primaryLabel}
-            </Link>
-            <Link
-              href={secondaryHref}
-              className="inline-flex items-center justify-center rounded-md border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100 transition-colors"
-            >
+            </LinkButton>
+            <LinkButton href={secondaryHref} variant="secondary" size="md">
               {secondaryLabel}
-            </Link>
+            </LinkButton>
           </div>
 
           <div className="mt-8 grid gap-2 text-xs text-zinc-600 sm:grid-cols-3 sm:text-sm">

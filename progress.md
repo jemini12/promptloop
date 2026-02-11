@@ -58,6 +58,11 @@
   - Centralized UI descriptions and CTA/button labels into `src/content/ui-text.ts`.
   - Landing, Dashboard, Help, Sign In, Navbar, and Job Editor now consume shared copy keys.
   - Reduces string duplication and makes future copy updates one-file changes.
+- **Control Standardization (2026-02-11)**:
+  - Added reusable `Button` and `LinkButton` components with shared tokens via `src/components/ui/control-styles.ts`.
+  - Refactored landing/help/dashboard CTAs to `LinkButton` and interactive actions (signin/job editor) to `Button`.
+  - Enforced equal size/typography between link/button controls for the same variant and size.
+  - Added drift guard: `scripts/check-ui-controls.sh` and `npm run check:ui-controls`.
 
 ## In Place and Verified
 

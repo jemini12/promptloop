@@ -3,6 +3,7 @@
 import cronstrue from "cronstrue";
 import { useState } from "react";
 import { useJobForm } from "@/components/job-editor/job-form-provider";
+import { Button } from "@/components/ui/button";
 import { uiText } from "@/content/ui-text";
 
 const sectionClass = "surface-card";
@@ -51,16 +52,18 @@ export function JobPromptSection() {
         </label>
         <div className="flex items-center gap-2">
           {state.prompt ? (
-            <button
+            <Button
               type="button"
               onClick={() => setState((prev) => ({ ...prev, prompt: "" }))}
-              className="px-2 py-1 text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-zinc-100 rounded-md transition-colors"
+              variant="ghost"
+              size="sm"
+              className="text-zinc-500 hover:text-red-600"
               aria-label="Clear prompt"
             >
               {uiText.jobEditor.prompt.clear}
-            </button>
+            </Button>
           ) : null}
-          <button
+          <Button
             type="button"
             onClick={() =>
               setState((prev) => ({
@@ -68,10 +71,12 @@ export function JobPromptSection() {
                 prompt: uiText.jobEditor.prompt.examplePrompt,
               }))
             }
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm hover:bg-zinc-100 transition-colors"
+            variant="secondary"
+            size="sm"
+            className="shadow-sm"
           >
             {uiText.jobEditor.prompt.useExample}
-          </button>
+          </Button>
         </div>
       </div>
       <p className="field-help">{uiText.jobEditor.prompt.description}</p>
@@ -414,14 +419,17 @@ export function JobPreviewSection() {
     <section className={sectionClass}>
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-zinc-900">{uiText.jobEditor.preview.title}</h3>
-        <button
+        <Button
           type="button"
           onClick={preview}
+          variant="primary"
+          size="sm"
+          loading={state.preview.loading}
+          className="shadow-sm"
           disabled={state.preview.loading}
-          className="inline-flex items-center justify-center rounded-lg border border-transparent bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
         >
           {state.preview.loading ? uiText.jobEditor.preview.running : uiText.jobEditor.preview.run}
-        </button>
+        </Button>
       </div>
       <label className="mt-3 inline-flex items-center gap-2 text-xs text-zinc-700">
         <input type="checkbox" checked={testSend} onChange={(event) => setTestSend(event.target.checked)} />
