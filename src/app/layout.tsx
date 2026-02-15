@@ -14,20 +14,20 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Promptly",
-    template: "%s | Promptly",
+    default: "Promptloop",
+    template: "%s | Promptloop",
   },
   description: "Schedule AI prompts, preview output, and deliver automated results to Discord, Telegram, or a custom webhook.",
-  applicationName: "Promptly",
+  applicationName: "Promptloop",
   keywords: ["AI automation", "prompt scheduler", "Discord", "Telegram", "webhook", "workflow"],
   openGraph: {
-    title: "Promptly",
+    title: "Promptloop",
     description: "Run AI prompts on your schedule and deliver results automatically.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Promptly",
+    title: "Promptloop",
     description: "Schedule AI prompts and deliver output automatically.",
   },
 };

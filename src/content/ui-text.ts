@@ -1,6 +1,6 @@
 export const uiText = {
   brand: {
-    name: "Promptly",
+    name: "Promptloop",
   },
   nav: {
     help: "Help",
@@ -11,7 +11,7 @@ export const uiText = {
   landing: {
     title: "Automate recurring prompts with reliable scheduled runs.",
     description:
-      "Promptly runs your prompt on schedule, lets you validate output before saving, and delivers final messages to Discord, Telegram, or a custom webhook.",
+      "Promptloop runs your prompt on schedule, lets you validate output before saving, and delivers final messages to Discord, Telegram, or a custom webhook.",
     cta: {
       primarySignedIn: "Create Job",
       primarySignedOut: "Sign in to Create",
@@ -82,8 +82,8 @@ export const uiText = {
       description:
         "Use Custom Webhook to integrate with any endpoint. Headers and payload are stored as JSON strings and must be valid JSON.",
       examples: {
-        headers: '{"Authorization":"Bearer <token>","X-Job":"promptly"}',
-        payload: '{"content":"Hello from Promptly"}',
+        headers: '{"Authorization":"Bearer <token>","X-Job":"promptloop"}',
+        payload: '{"content":"Hello from Promptloop"}',
       },
       notes: [
         "If your endpoint expects JSON, include a Content-Type header (often `application/json`).",
@@ -99,7 +99,7 @@ export const uiText = {
       items: [
         "Unauthorized preview: sign in again and use the same host (`localhost`).",
         "Delivery error: verify Discord/Telegram/webhook configuration and ensure webhook headers/payload JSON is valid.",
-        "No scheduled sends: check job is enabled and worker process is running.",
+        "No scheduled sends: check job is enabled and the Vercel Cron endpoint is being invoked.",
       ],
     },
   },

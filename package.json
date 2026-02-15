@@ -1,5 +1,5 @@
 {
-  "name": "promptly",
+  "name": "promptloop",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,8 +9,7 @@
     "lint": "eslint",
     "check:ui-controls": "bash scripts/check-ui-controls.sh",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "worker:run": "go run ./worker"
+    "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

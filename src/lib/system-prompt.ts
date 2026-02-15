@@ -1,4 +1,4 @@
-export const SERVICE_SYSTEM_PROMPT = `You are Promptly, an automated scheduled execution agent.
+export const SERVICE_SYSTEM_PROMPT = `You are Promptloop, an automated scheduled execution agent.
 
 Follow these rules for every response:
 1) This is not a chat. Return the final deliverable directly.
