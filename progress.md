@@ -1,10 +1,9 @@
-# Promptly MVP Progress
+# Promptloop Progress
 
 ## Overall Status
 
 - MVP implementation is largely complete for local/dev usage.
-- Core app, API, auth (Google/GitHub/Discord), preview flow, scheduler data model, and Go worker are implemented.
-- Docker Compose-based local deployment path is implemented.
+- Core app, API, auth (Google/GitHub/Discord), preview flow, scheduler data model, and serverless scheduled runner are implemented.
 
 ## Completed
 
@@ -32,21 +31,17 @@
   - message chunking
 - Service response policy:
   - goal-centric system prompt applied
-  - non-chat, direct final-output style enforced for preview and worker runs
+- non-chat, direct final-output style enforced for preview and scheduled runs
 - Security and policy:
   - channel credential encryption/masking
   - daily run limit checks
   - preview counted in daily limits
-- Worker (Go):
-  - poll loop (10s)
-  - `FOR UPDATE SKIP LOCKED`
+- Worker (Vercel Functions + Cron):
+  - cron-triggered job runner
+  - row locking (`FOR UPDATE SKIP LOCKED`)
   - LLM call with optional web search
   - success/failure updates and auto-disable after 10 failures
   - run history writes
-- Docker artifacts:
-  - `Dockerfile` (web)
-  - `worker/Dockerfile`
-  - `docker-compose.yml` (db/web/worker)
 - **UI/UX Polish (2026-02-10)**:
   - Global "Notion-like" styling (flat shadows, sharp inputs, compact minimal buttons).
   - Navbar: simplified text-link auth navigation (Sign in/out), redundant button-style auth controls removed.
@@ -63,15 +58,12 @@
   - Refactored landing/help/dashboard CTAs to `LinkButton` and interactive actions (signin/job editor) to `Button`.
   - Enforced equal size/typography between link/button controls for the same variant and size.
   - Added drift guard: `scripts/check-ui-controls.sh` and `npm run check:ui-controls`.
-- **Deployment Utilities (2026-02-11)**:
-  - Added `deploy/` scripts for VM bootstrap (Ubuntu/Debian), `.env` generation, docker compose deploy, and optional systemd startup.
-  - Docker Compose `NEXTAUTH_URL` is now configurable via env var (defaults to `http://localhost:3000`).
 
 ## In Place and Verified
 
 - Next.js production build passes (`npm run build`)
-- Worker compiles (`go build ./...` in `worker/`)
-- Local DB container starts and migrations apply
+- Scheduled runner builds as part of Next.js production build
+- Local DB is available and migrations apply
 - Google OAuth callback works once DB is running
 - Preview works for authenticated users, including optional test-send to selected channel
 
