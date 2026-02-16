@@ -99,6 +99,13 @@
 - Google OAuth callback works once DB is running
 - Preview works for authenticated users, including optional test-send to selected channel
 
+## Local Testing Notes (2026-02-17)
+
+- Dev server restart: `npm run dev` boots cleanly.
+- HTTP smoke checks (logged out): `/`, `/help`, `/signin` return 200; protected APIs return 401.
+- Unit-style checks: prompt template rendering built-ins and webhook default payload/meta shaping.
+- Known dev-only noise: if you have stale `next-auth.*` cookies after secret/env changes, you may see `JWT_SESSION_ERROR` until cookies are cleared.
+
 Dev auth troubleshooting notes (common):
 
 - `next-auth` `JWT_SESSION_ERROR` (JWE decryption failed) is typically stale cookies after a secret/env change.
