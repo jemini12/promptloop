@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
           { type: "discord", webhookUrl: payload.channel.config.webhookUrl },
           title,
           result.output,
+          { citations: result.citations, usedWebSearch: result.usedWebSearch },
         );
       } else if (payload.channel.type === "telegram") {
         await sendChannelMessage(
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
           },
           title,
           result.output,
+          { citations: result.citations, usedWebSearch: result.usedWebSearch },
         );
       } else {
         await sendChannelMessage(
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
           },
           title,
           result.output,
+          { citations: result.citations, usedWebSearch: result.usedWebSearch },
         );
       }
     }
@@ -60,7 +63,8 @@ export async function POST(request: NextRequest) {
       status: "success",
       output: result.output,
       executedAt: new Date().toISOString(),
-      usedWebSearch: payload.allowWebSearch,
+      usedWebSearch: result.usedWebSearch,
+      citations: result.citations,
     });
   } catch (error) {
     return errorResponse(error);

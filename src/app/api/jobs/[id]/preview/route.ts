@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { format } from "date-fns";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/authz";
 import { errorResponse } from "@/lib/http";
@@ -33,26 +34,35 @@ export async function POST(request: NextRequest, { params }: Params) {
     const title = `[${job.name}] ${format(new Date(), "yyyy-MM-dd HH:mm")}`;
 
     if (body.testSend) {
-      await sendChannelMessage(toRunnableChannel(job), title, result.output);
+      await sendChannelMessage(toRunnableChannel(job), title, result.output, {
+        citations: result.citations,
+        usedWebSearch: result.usedWebSearch,
+      });
     }
 
-    await prisma.runHistory.create({
-      data: {
-        jobId: job.id,
-        promptVersionId: pv.id,
-        status: "success",
-        outputText: result.output,
-        outputPreview: result.output.slice(0, 1000),
-        isPreview: true,
-      },
-    });
+    const runData = {
+      jobId: job.id,
+      promptVersionId: pv.id,
+      status: "success",
+      outputText: result.output,
+      outputPreview: result.output.slice(0, 1000),
+      llmModel: result.llmModel ?? null,
+      llmUsage: result.llmUsage == null ? Prisma.DbNull : (result.llmUsage as Prisma.InputJsonValue),
+      llmToolCalls: result.llmToolCalls == null ? Prisma.DbNull : (result.llmToolCalls as Prisma.InputJsonValue),
+      usedWebSearch: result.usedWebSearch,
+      citations: result.citations,
+      isPreview: true,
+    };
+
+    await prisma.runHistory.create({ data: runData as unknown as Prisma.RunHistoryUncheckedCreateInput });
     await prisma.previewEvent.create({ data: { userId } });
 
     return NextResponse.json({
       status: "success",
       output: result.output,
       executedAt: new Date().toISOString(),
-      usedWebSearch: job.allowWebSearch,
+      usedWebSearch: result.usedWebSearch,
+      citations: result.citations,
     });
   } catch (error) {
     return errorResponse(error);

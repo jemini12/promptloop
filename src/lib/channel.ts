@@ -9,6 +9,13 @@ type SendChannelInput =
       payload: string;
     };
 
+export type ChannelCitation = { url: string; title?: string };
+
+type SendChannelOptions = {
+  citations?: ChannelCitation[];
+  usedWebSearch?: boolean;
+};
+
 export class ChannelRequestError extends Error {
   status: number;
 
@@ -35,8 +42,16 @@ function chunkMessage(text: string, max: number) {
   return chunks;
 }
 
-export async function sendChannelMessage(channel: SendChannelInput, title: string, body: string) {
-  const text = `${title}\n\n${body}`;
+export async function sendChannelMessage(channel: SendChannelInput, title: string, body: string, opts?: SendChannelOptions) {
+  const citations = (opts?.citations ?? []).filter((c) => c && typeof c.url === "string" && c.url.length > 0);
+  const sources = citations.length
+    ? `\n\nSources:\n${citations
+        .slice(0, 5)
+        .map((c) => (c.title ? `- ${c.title}: ${c.url}` : `- ${c.url}`))
+        .join("\n")}`
+    : "";
+
+  const text = `${title}\n\n${body}${sources}`;
 
   if (channel.type === "discord") {
     for (const chunk of chunkMessage(text, DISCORD_MAX)) {
@@ -54,7 +69,9 @@ export async function sendChannelMessage(channel: SendChannelInput, title: strin
 
   if (channel.type === "webhook") {
     const headers = channel.headers.trim() ? JSON.parse(channel.headers) : {};
-    const payload = channel.payload.trim() ? JSON.parse(channel.payload) : { content: text };
+    const payload = channel.payload.trim()
+      ? JSON.parse(channel.payload)
+      : { content: text, title, body, usedWebSearch: opts?.usedWebSearch ?? false, citations };
     const res = await fetch(channel.url, {
       method: channel.method,
       headers: {

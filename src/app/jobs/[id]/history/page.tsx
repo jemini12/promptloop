@@ -51,30 +51,58 @@ export default async function JobHistoryPage({ params }: Params) {
           </div>
         ) : (
           <ul className="mt-4 space-y-2">
-            {job.runHistories.map((history) => (
-              <li key={history.id} className="surface-card p-3">
-                <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-800">
-                  <span
-                    className={
-                      history.status === "success"
-                        ? "status-pill status-pill-success"
-                        : history.status === "fail"
-                          ? "status-pill status-pill-fail"
-                          : "status-pill status-pill-neutral"
-                    }
-                  >
-                    {history.status}
-                  </span>
-                  <p>{format(history.runAt, "PPp")}</p>
-                </div>
-                {history.errorMessage ? <p className="mt-1 text-xs text-zinc-500">{history.errorMessage}</p> : null}
-                {history.outputPreview ? (
-                  <p className="line-clamp-2 mt-1 text-xs text-zinc-500" title={history.outputPreview}>
-                    {history.outputPreview}
-                  </p>
-                ) : null}
-              </li>
-            ))}
+            {job.runHistories.map((history) => {
+              const usedWebSearch = Boolean((history as unknown as { usedWebSearch?: boolean }).usedWebSearch);
+              const citationsUnknown = (history as unknown as { citations?: unknown }).citations;
+              const citations = Array.isArray(citationsUnknown)
+                ? (citationsUnknown as Array<{ url?: unknown; title?: unknown }>).filter((c) => typeof c?.url === "string")
+                : [];
+
+              return (
+                <li key={history.id} className="surface-card p-3">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-800">
+                    <span
+                      className={
+                        history.status === "success"
+                          ? "status-pill status-pill-success"
+                          : history.status === "fail"
+                            ? "status-pill status-pill-fail"
+                            : "status-pill status-pill-neutral"
+                      }
+                    >
+                      {history.status}
+                    </span>
+                    {usedWebSearch ? <span className="status-pill status-pill-neutral">web</span> : null}
+                    <p>{format(history.runAt, "PPp")}</p>
+                  </div>
+                  {history.errorMessage ? <p className="mt-1 text-xs text-zinc-500">{history.errorMessage}</p> : null}
+                  {history.outputPreview ? (
+                    <p className="line-clamp-2 mt-1 text-xs text-zinc-500" title={history.outputPreview}>
+                      {history.outputPreview}
+                    </p>
+                  ) : null}
+                  {citations.length ? (
+                    <div className="mt-2 text-xs text-zinc-600">
+                      <p className="font-medium text-zinc-800">Sources</p>
+                      <ul className="mt-1 space-y-0.5">
+                        {citations.slice(0, 3).map((c, idx) => (
+                          <li key={`${history.id}-c${idx}`}>
+                            <a
+                              className="underline decoration-zinc-300 underline-offset-2"
+                              href={c.url as string}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {typeof c.title === "string" && c.title.trim() ? c.title : (c.url as string)}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
