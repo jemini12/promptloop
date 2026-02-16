@@ -16,7 +16,8 @@ Copy `.env.example` to `.env`.
 
 Required values:
 
-- `DATABASE_URL`
+- `PRISMA_DATABASE_URL` (Prisma Accelerate URL; used at runtime)
+- `DATABASE_URL` (direct Postgres URL; used for Prisma migrate/introspect)
 - `OPENAI_API_KEY`
 - `NEXTAUTH_SECRET`
 - OAuth keys:
