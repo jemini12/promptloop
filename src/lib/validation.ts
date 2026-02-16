@@ -34,10 +34,13 @@ const webhookConfigSchema = z.object({
 });
 
 export const previewSchema = z.object({
-  prompt: z.string().min(1).max(8000),
+  template: z.string().min(1).max(8000),
+  variables: z.string().default("{}").optional(),
   allowWebSearch: z.boolean().default(false),
   testSend: z.boolean().optional().default(false),
   name: z.string().max(100).optional().default("Preview"),
+  nowIso: z.string().optional(),
+  timezone: z.string().max(64).optional(),
   channel: z
     .discriminatedUnion("type", [
       z.object({ type: z.literal("discord"), config: discordConfigSchema }),
@@ -45,12 +48,31 @@ export const previewSchema = z.object({
       z.object({ type: z.literal("webhook"), config: webhookConfigSchema }),
     ])
     .optional(),
+}).superRefine((value, ctx) => {
+  if (value.variables == null) {
+    return;
+  }
+  try {
+    const parsed = JSON.parse(value.variables || "{}");
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["variables"], message: "Variables must be a JSON object" });
+    }
+  } catch {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["variables"], message: "Variables must be valid JSON" });
+  }
+  if (value.nowIso) {
+    const date = new Date(value.nowIso);
+    if (Number.isNaN(date.getTime())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["nowIso"], message: "nowIso must be a valid ISO date" });
+    }
+  }
 });
 
 export const jobUpsertSchema = z
   .object({
     name: z.string().min(1).max(100),
-    prompt: z.string().min(1).max(8000),
+    template: z.string().min(1).max(8000),
+    variables: z.string().default("{}").optional(),
     allowWebSearch: z.boolean().default(false),
     scheduleType: z.enum(["daily", "weekly", "cron"]),
     scheduleTime: z.string().optional().nullable(),
@@ -64,6 +86,17 @@ export const jobUpsertSchema = z
     enabled: z.boolean().default(true),
   })
   .superRefine((value, ctx) => {
+    if (value.variables != null) {
+      try {
+        const parsed = JSON.parse(value.variables || "{}");
+        if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["variables"], message: "Variables must be a JSON object" });
+        }
+      } catch {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["variables"], message: "Variables must be valid JSON" });
+      }
+    }
+
     if (value.scheduleType !== "cron" && !value.scheduleTime) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["scheduleTime"], message: "Required for daily/weekly" });
     }

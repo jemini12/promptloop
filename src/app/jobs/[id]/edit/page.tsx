@@ -24,10 +24,16 @@ export default async function EditJobPage({ params }: Params) {
   }
 
   const { id } = await params;
-  const job = await prisma.job.findFirst({ where: { id, userId: session.user.id } });
+  const job = await prisma.job.findFirst({
+    where: { id, userId: session.user.id },
+    include: { publishedPromptVersion: true },
+  });
   if (!job) {
     notFound();
   }
+
+  const template = job.publishedPromptVersion?.template ?? job.prompt;
+  const variables = JSON.stringify((job.publishedPromptVersion?.variables as object | null) ?? {}, null, 2);
 
   const channel =
     job.channelType === "discord"
@@ -63,7 +69,8 @@ export default async function EditJobPage({ params }: Params) {
           jobId={job.id}
           initialState={{
             name: job.name,
-            prompt: job.prompt,
+            prompt: template,
+            variables,
             allowWebSearch: job.allowWebSearch,
             scheduleType: job.scheduleType,
             time: job.scheduleTime,

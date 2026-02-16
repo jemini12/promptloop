@@ -72,6 +72,7 @@ model Job {
   userId            String       @map("user_id") @db.Uuid
   name              String
   prompt            String
+  publishedPromptVersionId String? @map("published_prompt_version_id") @db.Uuid
   allowWebSearch    Boolean      @default(false) @map("allow_web_search")
   scheduleType      ScheduleType @map("schedule_type")
   scheduleTime      String       @map("schedule_time")
@@ -88,15 +89,34 @@ model Job {
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   runHistories RunHistory[]
+  promptVersions PromptVersion[]
+  publishedPromptVersion PromptVersion? @relation("PublishedPromptVersion", fields: [publishedPromptVersionId], references: [id], onDelete: SetNull)
 
   @@index([nextRunAt], map: "idx_jobs_next_run_at")
   @@index([enabled], map: "idx_jobs_enabled")
+  @@index([publishedPromptVersionId], map: "idx_jobs_published_prompt_version_id")
   @@map("jobs")
+}
+
+model PromptVersion {
+  id        String   @id @default(uuid()) @db.Uuid
+  jobId     String   @map("job_id") @db.Uuid
+  template  String
+  variables Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  runs RunHistory[]
+  publishedBy Job[] @relation("PublishedPromptVersion")
+
+  @@index([jobId], map: "idx_prompt_versions_job_id")
+  @@map("prompt_versions")
 }
 
 model RunHistory {
   id            String   @id @default(uuid()) @db.Uuid
   jobId         String   @map("job_id") @db.Uuid
+  promptVersionId String? @map("prompt_version_id") @db.Uuid
   // The scheduled time this run corresponds to (used for idempotency on cron runs).
   scheduledFor   DateTime? @map("scheduled_for") @db.Timestamptz(6)
   runAt         DateTime @default(now()) @map("run_at") @db.Timestamptz(6)
@@ -114,9 +134,11 @@ model RunHistory {
   deliveryLastError String? @map("delivery_last_error")
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  promptVersion PromptVersion? @relation(fields: [promptVersionId], references: [id], onDelete: SetNull)
   deliveryAttemptsLog DeliveryAttempt[]
 
   @@index([jobId], map: "idx_run_histories_job_id")
+  @@index([promptVersionId], map: "idx_run_histories_prompt_version_id")
   @@unique([jobId, scheduledFor, isPreview], map: "uniq_run_histories_job_scheduled_for_preview")
   @@map("run_histories")
 }

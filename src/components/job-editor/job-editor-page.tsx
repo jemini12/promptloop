@@ -23,6 +23,17 @@ function getSaveValidationMessage(state: JobFormState): string | null {
     return "Prompt is required.";
   }
 
+  if (state.variables.trim()) {
+    try {
+      const parsed = JSON.parse(state.variables);
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        return "Variables must be a JSON object.";
+      }
+    } catch {
+      return "Variables must be valid JSON.";
+    }
+  }
+
   if (state.scheduleType !== "cron" && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(state.time)) {
     return "Schedule time must be in HH:mm format.";
   }
@@ -82,7 +93,8 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
     setError(null);
     const body = {
       name: state.name,
-      prompt: state.prompt,
+      template: state.prompt,
+      variables: state.variables,
       allowWebSearch: state.allowWebSearch,
       scheduleType: state.scheduleType,
       scheduleTime: state.scheduleType === "cron" ? "00:00" : state.time,

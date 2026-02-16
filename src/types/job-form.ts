@@ -1,6 +1,7 @@
 export type JobFormState = {
   name: string;
   prompt: string;
+  variables: string;
   allowWebSearch: boolean;
   scheduleType: "daily" | "weekly" | "cron";
   time: string;
@@ -32,6 +33,7 @@ export type JobFormState = {
 export const defaultJobFormState: JobFormState = {
   name: "",
   prompt: "",
+  variables: "{}",
   allowWebSearch: false,
   scheduleType: "daily",
   time: "09:00",

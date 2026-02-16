@@ -5,6 +5,8 @@ import { sendChannelMessage, ChannelRequestError } from "@/lib/channel";
 import { toRunnableChannel } from "@/lib/jobs";
 import { computeNextRunAt } from "@/lib/schedule";
 import { enforceDailyRunLimit } from "@/lib/limits";
+import { renderPromptTemplate } from "@/lib/prompt-template";
+import { getOrCreatePublishedPromptVersion } from "@/lib/prompt-version";
 
 const DEFAULT_LOCK_STALE_MINUTES = 10;
 const MAX_FAILS_BEFORE_DISABLE = 10;
@@ -158,7 +160,7 @@ export async function runDueJobs(opts: { timeBudgetMs: number; maxJobs: number; 
       return result;
     }
 
-    const job = await prisma.job.findUnique({ where: { id: lock.id } });
+    const job = await prisma.job.findUnique({ where: { id: lock.id }, include: { publishedPromptVersion: true } });
     if (!job) {
       result.processed++;
       result.fail++;
@@ -166,6 +168,10 @@ export async function runDueJobs(opts: { timeBudgetMs: number; maxJobs: number; 
     }
 
     const scheduledFor = job.nextRunAt;
+    const pv = job.publishedPromptVersion ?? (await getOrCreatePublishedPromptVersion(job.id));
+    const template = pv.template;
+    const vars = (pv.variables as Record<string, string> | null) ?? {};
+    const renderedPrompt = renderPromptTemplate({ template, vars, now: scheduledFor });
 
     const title = `[${job.name}] ${format(new Date(), "yyyy-MM-dd HH:mm")}`;
 
@@ -174,6 +180,7 @@ export async function runDueJobs(opts: { timeBudgetMs: number; maxJobs: number; 
       const created = await prisma.runHistory.create({
         data: {
           jobId: job.id,
+          promptVersionId: pv.id,
           scheduledFor,
           status: "running",
           outputText: null,
@@ -223,7 +230,7 @@ export async function runDueJobs(opts: { timeBudgetMs: number; maxJobs: number; 
     let error: unknown;
     try {
       await enforceDailyRunLimit(job.userId);
-      const llm = await runPromptWithRetry(job.prompt, job.allowWebSearch);
+      const llm = await runPromptWithRetry(renderedPrompt, job.allowWebSearch);
       output = llm.output;
 
       await prisma.runHistory.update({

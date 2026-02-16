@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
     const payload = await request.json();
     const parsed = jobUpsertSchema.parse(payload);
 
+    const variables = parsed.variables ? (JSON.parse(parsed.variables || "{}") as Record<string, string>) : {};
+
     const { channelType, channelConfig } = toDbChannelConfig(parsed.channel);
     const nextRunAt = computeNextRunAt({
       scheduleType: parsed.scheduleType,
@@ -38,7 +40,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId,
         name: parsed.name,
-        prompt: parsed.prompt,
+        prompt: parsed.template,
         allowWebSearch: parsed.allowWebSearch,
         scheduleType: parsed.scheduleType,
         scheduleTime: parsed.scheduleTime,
@@ -48,10 +50,23 @@ export async function POST(request: NextRequest) {
         channelConfig,
         enabled: parsed.enabled,
         nextRunAt,
+        promptVersions: {
+          create: {
+            template: parsed.template,
+            variables,
+          },
+        },
       },
+      include: { promptVersions: { orderBy: { createdAt: "desc" }, take: 1 } },
     });
 
-    return NextResponse.json({ job: toMaskedApiJob(job) });
+    const latest = job.promptVersions[0];
+    const updated = await prisma.job.update({
+      where: { id: job.id },
+      data: { publishedPromptVersionId: latest?.id ?? null },
+    });
+
+    return NextResponse.json({ job: toMaskedApiJob(updated) });
   } catch (error) {
     return errorResponse(error);
   }

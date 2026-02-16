@@ -7,6 +7,8 @@ import { runPrompt } from "@/lib/llm";
 import { sendChannelMessage } from "@/lib/channel";
 import { toRunnableChannel } from "@/lib/jobs";
 import { enforceDailyRunLimit } from "@/lib/limits";
+import { renderPromptTemplate } from "@/lib/prompt-template";
+import { getOrCreatePublishedPromptVersion } from "@/lib/prompt-version";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -17,12 +19,17 @@ export async function POST(request: NextRequest, { params }: Params) {
     const { id } = await params;
     const body = (await request.json()) as { testSend?: boolean };
 
-    const job = await prisma.job.findFirst({ where: { id, userId } });
+    const job = await prisma.job.findFirst({ where: { id, userId }, include: { publishedPromptVersion: true } });
     if (!job) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const result = await runPrompt(job.prompt, job.allowWebSearch);
+    const pv = job.publishedPromptVersion ?? (await getOrCreatePublishedPromptVersion(job.id));
+    const template = pv.template;
+    const vars = (pv.variables as Record<string, string> | null) ?? {};
+    const prompt = renderPromptTemplate({ template, vars });
+
+    const result = await runPrompt(prompt, job.allowWebSearch);
     const title = `[${job.name}] ${format(new Date(), "yyyy-MM-dd HH:mm")}`;
 
     if (body.testSend) {
@@ -32,7 +39,9 @@ export async function POST(request: NextRequest, { params }: Params) {
     await prisma.runHistory.create({
       data: {
         jobId: job.id,
+        promptVersionId: pv.id,
         status: "success",
+        outputText: result.output,
         outputPreview: result.output.slice(0, 1000),
         isPreview: true,
       },

@@ -15,6 +15,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const payload = await request.json();
     const parsed = jobUpsertSchema.parse(payload);
 
+    const variables = parsed.variables ? (JSON.parse(parsed.variables || "{}") as Record<string, string>) : {};
+
     const exists = await prisma.job.findFirst({ where: { id, userId }, select: { id: true } });
     if (!exists) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -32,7 +34,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       where: { id },
       data: {
         name: parsed.name,
-        prompt: parsed.prompt,
+        prompt: parsed.template,
         allowWebSearch: parsed.allowWebSearch,
         scheduleType: parsed.scheduleType,
         scheduleTime: parsed.scheduleTime,
@@ -42,10 +44,23 @@ export async function PUT(request: NextRequest, { params }: Params) {
         channelConfig,
         enabled: parsed.enabled,
         nextRunAt,
+        promptVersions: {
+          create: {
+            template: parsed.template,
+            variables,
+          },
+        },
       },
+      include: { promptVersions: { orderBy: { createdAt: "desc" }, take: 1 } },
     });
 
-    return NextResponse.json({ job: toMaskedApiJob(job) });
+    const latest = job.promptVersions[0];
+    const updated = await prisma.job.update({
+      where: { id: job.id },
+      data: { publishedPromptVersionId: latest?.id ?? null },
+    });
+
+    return NextResponse.json({ job: toMaskedApiJob(updated) });
   } catch (error) {
     return errorResponse(error);
   }

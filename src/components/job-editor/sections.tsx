@@ -87,6 +87,18 @@ export function JobPromptSection() {
         className="input-base mt-2 h-44 resize-y"
         placeholder={uiText.jobEditor.prompt.placeholder}
       />
+
+      <label className="field-label mt-4" htmlFor="job-variables">
+        Variables (JSON)
+      </label>
+      <p className="field-help">Optional. Use {"{{var_name}}"} placeholders in the prompt template.</p>
+      <textarea
+        id="job-variables"
+        value={state.variables}
+        onChange={(event) => setState((prev) => ({ ...prev, variables: event.target.value }))}
+        className="input-base mt-2 h-28 resize-y"
+        placeholder='{"topic":"...","audience":"..."}'
+      />
     </section>
   );
 }
@@ -361,22 +373,39 @@ export function JobChannelSection() {
 export function JobPreviewSection() {
   const { state, setState } = useJobForm();
   const [testSend, setTestSend] = useState(false);
+  const [runAsScheduled, setRunAsScheduled] = useState(false);
+  const [runAt, setRunAt] = useState("");
+  const [timezone, setTimezone] = useState("");
 
   async function preview() {
     setState((prev) => ({ ...prev, preview: { ...prev.preview, loading: true, status: "idle" } }));
     try {
       const payload: {
         name: string;
-        prompt: string;
+        template: string;
+        variables: string;
         allowWebSearch: boolean;
         testSend: boolean;
+        nowIso?: string;
+        timezone?: string;
         channel?: typeof state.channel;
       } = {
         name: state.name || uiText.jobEditor.preview.defaultName,
-        prompt: state.prompt,
+        template: state.prompt,
+        variables: state.variables,
         allowWebSearch: state.allowWebSearch,
         testSend,
       };
+
+      if (runAsScheduled && runAt) {
+        const date = new Date(runAt);
+        if (!Number.isNaN(date.getTime())) {
+          payload.nowIso = date.toISOString();
+        }
+      }
+      if (runAsScheduled && timezone.trim()) {
+        payload.timezone = timezone.trim();
+      }
 
       if (testSend) {
         payload.channel = state.channel;
@@ -435,6 +464,28 @@ export function JobPreviewSection() {
         <input type="checkbox" checked={testSend} onChange={(event) => setTestSend(event.target.checked)} />
         {uiText.jobEditor.preview.testSend}
       </label>
+      <label className="mt-2 inline-flex items-center gap-2 text-xs text-zinc-700">
+        <input type="checkbox" checked={runAsScheduled} onChange={(event) => setRunAsScheduled(event.target.checked)} />
+        Run as scheduled
+      </label>
+      {runAsScheduled ? (
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <input
+            type="datetime-local"
+            value={runAt}
+            onChange={(event) => setRunAt(event.target.value)}
+            className="input-base"
+            aria-label="Run time"
+          />
+          <input
+            value={timezone}
+            onChange={(event) => setTimezone(event.target.value)}
+            className="input-base"
+            placeholder="Timezone (optional)"
+            aria-label="Timezone"
+          />
+        </div>
+      ) : null}
       <pre
         className="mt-3 min-h-24 max-h-80 overflow-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700"
         aria-live="polite"
