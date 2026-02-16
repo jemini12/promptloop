@@ -91,14 +91,18 @@ async function deliverWithRetryAndReceipts(
   channel: ReturnType<typeof toRunnableChannel>,
   title: string,
   output: string,
-  opts?: { citations?: { url: string; title?: string }[]; usedWebSearch?: boolean },
+  opts?: { citations?: { url: string; title?: string }[]; usedWebSearch?: boolean; meta?: Record<string, unknown> },
 ) {
   const maxRetries = Number(process.env.WORKER_DELIVERY_MAX_RETRIES ?? 3);
   const retries = Number.isFinite(maxRetries) && maxRetries > 0 ? Math.floor(maxRetries) : 3;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      await sendChannelMessage(channel, title, output, opts);
+      await sendChannelMessage(channel, title, output, {
+        citations: opts?.citations,
+        usedWebSearch: opts?.usedWebSearch,
+        meta: { ...(opts?.meta ?? {}), runHistoryId },
+      });
       await recordDeliveryAttempt(runHistoryId, attempt, "success");
       return { attempts: attempt, lastError: null as string | null };
     } catch (err) {
@@ -265,6 +269,13 @@ export async function runDueJobs(opts: { timeBudgetMs: number; maxJobs: number; 
       const delivery = await deliverWithRetryAndReceipts(runHistoryId, toRunnableChannel(job), title, output, {
         citations: llm.citations,
         usedWebSearch: llm.usedWebSearch,
+        meta: {
+          jobId: job.id,
+          promptVersionId: pv.id,
+          scheduledFor: scheduledFor.toISOString(),
+          llmModel: llm.llmModel ?? null,
+          llmUsage: llm.llmUsage ?? null,
+        },
       });
       if (delivery.lastError) {
         throw new Error(delivery.lastError);

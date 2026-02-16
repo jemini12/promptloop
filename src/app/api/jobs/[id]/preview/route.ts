@@ -37,6 +37,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       await sendChannelMessage(toRunnableChannel(job), title, result.output, {
         citations: result.citations,
         usedWebSearch: result.usedWebSearch,
+        meta: { kind: "job-preview", jobId: job.id, promptVersionId: pv.id },
       });
     }
 

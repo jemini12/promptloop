@@ -14,6 +14,7 @@ export type ChannelCitation = { url: string; title?: string };
 type SendChannelOptions = {
   citations?: ChannelCitation[];
   usedWebSearch?: boolean;
+  meta?: Record<string, unknown>;
 };
 
 export class ChannelRequestError extends Error {
@@ -44,6 +45,7 @@ function chunkMessage(text: string, max: number) {
 
 export async function sendChannelMessage(channel: SendChannelInput, title: string, body: string, opts?: SendChannelOptions) {
   const citations = (opts?.citations ?? []).filter((c) => c && typeof c.url === "string" && c.url.length > 0);
+  const meta = opts?.meta && typeof opts.meta === "object" && opts.meta !== null && !Array.isArray(opts.meta) ? opts.meta : undefined;
   const sources = citations.length
     ? `\n\nSources:\n${citations
         .slice(0, 5)
@@ -71,7 +73,7 @@ export async function sendChannelMessage(channel: SendChannelInput, title: strin
     const headers = channel.headers.trim() ? JSON.parse(channel.headers) : {};
     const payload = channel.payload.trim()
       ? JSON.parse(channel.payload)
-      : { content: text, title, body, usedWebSearch: opts?.usedWebSearch ?? false, citations };
+      : { title, body, content: text, usedWebSearch: opts?.usedWebSearch ?? false, citations, meta };
     const res = await fetch(channel.url, {
       method: channel.method,
       headers: {
