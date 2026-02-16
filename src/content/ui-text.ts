@@ -1,6 +1,6 @@
 export const uiText = {
   brand: {
-    name: "Promptloop",
+    name: "promptloop",
   },
   nav: {
     help: "Help",

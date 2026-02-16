@@ -16,7 +16,7 @@
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--fg);
-  --font-sans: var(--font-manrope);
+  --font-sans: var(--font-open-sans);
   --font-mono: var(--font-jetbrains-mono);
 }
 

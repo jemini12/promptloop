@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Manrope, JetBrains_Mono } from "next/font/google";
+import { Open_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const openSans = Open_Sans({
+  variable: "--font-open-sans",
   subsets: ["latin"],
 });
 
@@ -39,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${manrope.variable} ${jetbrainsMono.variable} antialiased`}>
+      <body className={`${openSans.variable} ${jetbrainsMono.variable} antialiased`}>
         {children}
       </body>
     </html>
