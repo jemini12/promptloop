@@ -18,12 +18,11 @@ type Params = { params: Promise<{ id: string }> };
 export const dynamic = "force-dynamic";
 
 export default async function EditJobPage({ params }: Params) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    redirect("/signin?callbackUrl=/dashboard");
+    redirect(`/signin?callbackUrl=${encodeURIComponent(`/jobs/${id}/edit`)}`);
   }
-
-  const { id } = await params;
   const job = await prisma.job.findFirst({
     where: { id, userId: session.user.id },
     include: { publishedPromptVersion: true },

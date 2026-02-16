@@ -17,12 +17,11 @@ export const metadata: Metadata = {
 };
 
 export default async function JobHistoryPage({ params }: Params) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    redirect("/signin?callbackUrl=/dashboard");
+    redirect(`/signin?callbackUrl=${encodeURIComponent(`/jobs/${id}/history`)}`);
   }
-
-  const { id } = await params;
   const job = await prisma.job.findFirst({
     where: { id, userId: session.user.id },
     include: {
