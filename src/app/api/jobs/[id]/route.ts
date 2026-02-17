@@ -37,6 +37,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
         name: parsed.name,
         prompt: parsed.template,
         allowWebSearch: parsed.allowWebSearch,
+        llmModel: parsed.llmModel || null,
+        webSearchMode: parsed.webSearchMode || null,
         scheduleType: parsed.scheduleType,
         scheduleTime: parsed.scheduleTime,
         scheduleDayOfWeek: parsed.scheduleDayOfWeek,
@@ -68,6 +70,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
       entityId: updated.id,
       data: {
         allowWebSearch: updated.allowWebSearch,
+        llmModel: updated.llmModel,
+        webSearchMode: updated.webSearchMode,
         scheduleType: updated.scheduleType,
         scheduleTime: updated.scheduleTime,
         scheduleDayOfWeek: updated.scheduleDayOfWeek,
