@@ -2,7 +2,9 @@ export type JobFormState = {
   name: string;
   prompt: string;
   variables: string;
+  llmModel: string;
   allowWebSearch: boolean;
+  webSearchMode: "perplexity" | "parallel";
   scheduleType: "daily" | "weekly" | "cron";
   time: string;
   dayOfWeek?: number;
@@ -34,7 +36,9 @@ export const defaultJobFormState: JobFormState = {
   name: "",
   prompt: "",
   variables: "{}",
+  llmModel: "openai/gpt-5-mini",
   allowWebSearch: false,
+  webSearchMode: "perplexity",
   scheduleType: "daily",
   time: "09:00",
   dayOfWeek: 1,
