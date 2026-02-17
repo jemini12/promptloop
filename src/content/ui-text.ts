@@ -156,6 +156,13 @@ export const uiText = {
       clear: "Clear",
       useExample: "Use example",
       examplePrompt: "Summarize top AI news in 5 bullets with one contrarian insight.",
+      writer: {
+        title: "Prompt Writer",
+        templatesLabel: "Template",
+        templatesLoading: "Loading templates...",
+        templatesFailed: "Failed to load templates.",
+        applyTemplate: "Apply template",
+      },
     },
     options: {
       title: "Options",

@@ -1,7 +1,7 @@
 "use client";
 
 import cronstrue from "cronstrue";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useJobForm } from "@/components/job-editor/job-form-provider";
 import { Button } from "@/components/ui/button";
 import { uiText } from "@/content/ui-text";
@@ -43,6 +43,61 @@ export function JobHeaderSection() {
 
 export function JobPromptSection() {
   const { state, setState } = useJobForm();
+  const [templates, setTemplates] = useState<
+    Array<{ key: string; name: string; description: string | null; template: string; defaultVariables: unknown }>
+  >([]);
+  const [templatesStatus, setTemplatesStatus] = useState<"idle" | "loading" | "ready" | "fail">("idle");
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>("");
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setTemplatesStatus("loading");
+      try {
+        const response = await fetch("/api/prompt-writer/templates");
+        const data = (await response.json()) as {
+          templates?: Array<{ key: string; name: string; description: string | null; template: string; defaultVariables: unknown }>;
+          error?: string;
+        };
+        if (!response.ok) {
+          throw new Error(data.error ?? "Failed to load templates");
+        }
+        if (cancelled) return;
+        const list = Array.isArray(data.templates) ? data.templates : [];
+        setTemplates(list);
+        setSelectedTemplateKey((prev) => prev || (list[0]?.key ?? ""));
+        setTemplatesStatus("ready");
+      } catch {
+        if (cancelled) return;
+        setTemplatesStatus("fail");
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function applySelectedTemplate() {
+    const selected = templates.find((t) => t.key === selectedTemplateKey);
+    if (!selected) return;
+
+    let variablesJson = "{}";
+    if (selected.defaultVariables && typeof selected.defaultVariables === "object" && !Array.isArray(selected.defaultVariables)) {
+      try {
+        variablesJson = JSON.stringify(selected.defaultVariables, null, 2);
+      } catch {
+        variablesJson = "{}";
+      }
+    }
+
+    setState((prev) => ({
+      ...prev,
+      prompt: selected.template,
+      variables: variablesJson,
+    }));
+  }
 
   return (
     <section className={sectionClass}>
@@ -87,6 +142,52 @@ export function JobPromptSection() {
         className="input-base mt-2 h-44 resize-y"
         placeholder={uiText.jobEditor.prompt.placeholder}
       />
+
+      <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-zinc-900">{uiText.jobEditor.prompt.writer.title}</p>
+          <Button
+            type="button"
+            onClick={applySelectedTemplate}
+            variant="secondary"
+            size="sm"
+            className="shadow-sm"
+            disabled={templatesStatus !== "ready" || !selectedTemplateKey}
+          >
+            {uiText.jobEditor.prompt.writer.applyTemplate}
+          </Button>
+        </div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+          <label className="text-xs text-zinc-600 sm:col-span-1" htmlFor="prompt-writer-template">
+            {uiText.jobEditor.prompt.writer.templatesLabel}
+          </label>
+          <div className="sm:col-span-2">
+            <select
+              id="prompt-writer-template"
+              value={selectedTemplateKey}
+              onChange={(event) => setSelectedTemplateKey(event.target.value)}
+              className="input-base h-10"
+              disabled={templatesStatus !== "ready"}
+            >
+              {templates.map((t) => (
+                <option key={t.key} value={t.key}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            {templatesStatus === "loading" ? (
+              <p className="mt-2 text-xs text-zinc-500">{uiText.jobEditor.prompt.writer.templatesLoading}</p>
+            ) : templatesStatus === "fail" ? (
+              <p className="mt-2 text-xs text-red-600">{uiText.jobEditor.prompt.writer.templatesFailed}</p>
+            ) : null}
+            {templatesStatus === "ready" ? (
+              <p className="mt-2 text-xs text-zinc-500">
+                {templates.find((t) => t.key === selectedTemplateKey)?.description ?? ""}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
 
       <label className="field-label mt-4" htmlFor="job-variables">
         Variables (JSON)
