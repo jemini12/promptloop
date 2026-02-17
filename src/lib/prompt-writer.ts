@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { generateText } from "ai";
 import { isRecord } from "@/lib/type-guards";
 
 type EnhancePromptInput = {
@@ -51,26 +51,15 @@ function buildEnhancerInstructions(allowStrongerRewrite: boolean): string {
 }
 
 export async function enhancePrompt(input: EnhancePromptInput): Promise<EnhancePromptOutput> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is required");
-  }
-  const openai = new OpenAI({ apiKey });
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60_000);
+  const result = await generateText({
+    model: "openai/gpt-5-mini",
+    system: buildEnhancerInstructions(input.allowStrongerRewrite),
+    prompt: input.prompt,
+    timeout: 60_000,
+  });
 
   try {
-    const response = await openai.responses.create(
-      {
-        model: "gpt-5-mini",
-        instructions: buildEnhancerInstructions(input.allowStrongerRewrite),
-        input: input.prompt,
-      },
-      { signal: controller.signal },
-    );
-
-    const text = (response.output_text ?? "").trim();
+    const text = (result.text ?? "").trim();
     if (!text) {
       throw new Error("LLM returned empty output");
     }
@@ -95,11 +84,15 @@ export async function enhancePrompt(input: EnhancePromptInput): Promise<EnhanceP
     const warnings = asStringArray(parsed.warnings);
     const suggestedVariables = asStringVars(parsed.suggested_variables);
 
-    const model = typeof response.model === "string" ? response.model : undefined;
-    const usage = (response as unknown as { usage?: unknown }).usage;
-
-    return { improvedTemplate, suggestedVariables, rationale, warnings, llmModel: model, llmUsage: usage };
-  } finally {
-    clearTimeout(timeout);
+    return {
+      improvedTemplate,
+      suggestedVariables,
+      rationale,
+      warnings,
+      llmModel: "openai/gpt-5-mini",
+      llmUsage: (result as unknown as { usage?: unknown }).usage,
+    };
+  } catch (err) {
+    throw err;
   }
 }
