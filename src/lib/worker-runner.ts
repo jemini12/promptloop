@@ -120,14 +120,14 @@ async function deliverWithRetryAndReceipts(
   return { attempts: retries, lastError: "Delivery failed" };
 }
 
-async function runPromptWithRetry(prompt: string, allowWebSearch: boolean) {
+async function runPromptWithRetry(prompt: string, opts: { model: string; allowWebSearch: boolean; webSearchMode: "perplexity" | "parallel" }) {
   const maxRetries = Number(process.env.WORKER_LLM_MAX_RETRIES ?? 2);
   const retries = Number.isFinite(maxRetries) && maxRetries > 0 ? Math.floor(maxRetries) : 2;
 
   let lastErr: unknown;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      return await runPrompt(prompt, allowWebSearch);
+      return await runPrompt(prompt, opts);
     } catch (err) {
       lastErr = err;
       const status = errorStatus(err);
@@ -240,7 +240,11 @@ export async function runDueJobs(opts: { timeBudgetMs: number; maxJobs: number; 
     let error: unknown;
     try {
       await enforceDailyRunLimit(job.userId);
-      const llm = await runPromptWithRetry(renderedPrompt, job.allowWebSearch);
+      const llm = await runPromptWithRetry(renderedPrompt, {
+        model: job.llmModel ?? "openai/gpt-5-mini",
+        allowWebSearch: job.allowWebSearch,
+        webSearchMode: job.webSearchMode === "parallel" ? "parallel" : "perplexity",
+      });
       output = llm.output;
 
       await prisma.runHistory.update({

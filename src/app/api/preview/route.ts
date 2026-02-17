@@ -19,7 +19,11 @@ export async function POST(request: NextRequest) {
     const vars = payload.variables ? (JSON.parse(payload.variables || "{}") as Record<string, string>) : {};
     const prompt = renderPromptTemplate({ template: payload.template, vars, now, timezone: payload.timezone });
 
-    const result = await runPrompt(prompt, payload.allowWebSearch);
+    const result = await runPrompt(prompt, {
+      model: payload.llmModel,
+      allowWebSearch: payload.allowWebSearch,
+      webSearchMode: payload.webSearchMode,
+    });
     const title = `[${payload.name}] ${format(new Date(), "yyyy-MM-dd HH:mm")}`;
 
     if (payload.testSend && payload.channel) {

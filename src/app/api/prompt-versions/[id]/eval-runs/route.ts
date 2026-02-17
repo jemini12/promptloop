@@ -69,7 +69,11 @@ export async function POST(request: NextRequest, { params }: Params) {
       const prompt = renderPromptTemplate({ template: pv.template, vars, now });
 
       try {
-        const llm = await runPrompt(prompt, false);
+        const llm = await runPrompt(prompt, {
+          model: "openai/gpt-5-mini",
+          allowWebSearch: false,
+          webSearchMode: "perplexity",
+        });
         const out = llm.output;
         const missing = mustInclude.filter((s) => !out.includes(s));
         results.push({ caseId: c.id, pass: missing.length === 0, missing, outputPreview: out.slice(0, 1000) });

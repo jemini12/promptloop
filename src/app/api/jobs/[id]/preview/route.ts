@@ -30,7 +30,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     const vars = (pv.variables as Record<string, string> | null) ?? {};
     const prompt = renderPromptTemplate({ template, vars });
 
-    const result = await runPrompt(prompt, job.allowWebSearch);
+    const result = await runPrompt(prompt, {
+      model: job.llmModel ?? "openai/gpt-5-mini",
+      allowWebSearch: job.allowWebSearch,
+      webSearchMode: job.webSearchMode === "parallel" ? "parallel" : "perplexity",
+    });
     const title = `[${job.name}] ${format(new Date(), "yyyy-MM-dd HH:mm")}`;
 
     if (body.testSend) {
