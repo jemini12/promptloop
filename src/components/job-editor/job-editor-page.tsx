@@ -88,21 +88,23 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
   const validationMessage = getSaveValidationMessage(state);
   const canSave = !validationMessage && !saving && !deleting;
 
-  async function save() {
-    setSaving(true);
-    setError(null);
-    const body = {
-      name: state.name,
-      template: state.prompt,
-      variables: state.variables,
-      allowWebSearch: state.allowWebSearch,
-      scheduleType: state.scheduleType,
-      scheduleTime: state.scheduleType === "cron" ? "00:00" : state.time,
-      scheduleDayOfWeek: state.dayOfWeek,
-      scheduleCron: state.cron,
-      channel: state.channel,
-      enabled: state.enabled,
-    };
+    async function save() {
+      setSaving(true);
+      setError(null);
+      const body = {
+        name: state.name,
+        template: state.prompt,
+        variables: state.variables,
+        allowWebSearch: state.allowWebSearch,
+        llmModel: state.llmModel,
+        webSearchMode: state.webSearchMode,
+        scheduleType: state.scheduleType,
+        scheduleTime: state.scheduleType === "cron" ? "00:00" : state.time,
+        scheduleDayOfWeek: state.dayOfWeek,
+        scheduleCron: state.cron,
+        channel: state.channel,
+        enabled: state.enabled,
+      };
 
     const endpoint = jobId ? `/api/jobs/${jobId}` : "/api/jobs";
     const method = jobId ? "PUT" : "POST";

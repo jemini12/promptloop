@@ -172,7 +172,14 @@ export const uiText = {
     },
     options: {
       title: "Options",
-      allowWebSearch: "Allow web search (OpenAI web search tool)",
+      modelLabel: "Model",
+      modelHelp: "AI Gateway model id (creator/model).",
+      allowWebSearch: "Allow web search",
+      webSearchModeLabel: "Web search mode",
+      webSearchModes: {
+        perplexity: "Perplexity (universal)",
+        parallel: "Parallel (universal)",
+      },
       keepEnabled: "Keep this job enabled after save",
     },
     schedule: {

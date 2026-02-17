@@ -285,6 +285,17 @@ export function JobOptionsSection() {
     <section className={sectionClass}>
       <h3 className="field-label">{uiText.jobEditor.options.title}</h3>
       <div className="mt-3 grid gap-2">
+        <label className="text-xs text-zinc-600" htmlFor="job-llm-model">
+          {uiText.jobEditor.options.modelLabel}
+        </label>
+        <input
+          id="job-llm-model"
+          value={state.llmModel}
+          onChange={(event) => setState((prev) => ({ ...prev, llmModel: event.target.value }))}
+          className="input-base h-10"
+          placeholder="openai/gpt-5-mini"
+        />
+        <p className="text-xs text-zinc-500">{uiText.jobEditor.options.modelHelp}</p>
         <label className="inline-flex items-center gap-2 text-sm text-zinc-900">
           <input
             type="checkbox"
@@ -293,6 +304,24 @@ export function JobOptionsSection() {
           />
           {uiText.jobEditor.options.allowWebSearch}
         </label>
+        {state.allowWebSearch ? (
+          <div className="mt-1">
+            <label className="text-xs text-zinc-600" htmlFor="job-web-search-mode">
+              {uiText.jobEditor.options.webSearchModeLabel}
+            </label>
+            <select
+              id="job-web-search-mode"
+              value={state.webSearchMode}
+              onChange={(event) =>
+                setState((prev) => ({ ...prev, webSearchMode: event.target.value as "perplexity" | "parallel" }))
+              }
+              className="input-base mt-1 h-10"
+            >
+              <option value="perplexity">{uiText.jobEditor.options.webSearchModes.perplexity}</option>
+              <option value="parallel">{uiText.jobEditor.options.webSearchModes.parallel}</option>
+            </select>
+          </div>
+        ) : null}
         <label className="inline-flex items-center gap-2 text-sm text-zinc-900">
           <input
             type="checkbox"
@@ -560,6 +589,8 @@ export function JobPreviewSection() {
         template: string;
         variables: string;
         allowWebSearch: boolean;
+        llmModel: string;
+        webSearchMode: "perplexity" | "parallel";
         testSend: boolean;
         nowIso?: string;
         timezone?: string;
@@ -569,6 +600,8 @@ export function JobPreviewSection() {
         template: state.prompt,
         variables: state.variables,
         allowWebSearch: state.allowWebSearch,
+        llmModel: state.llmModel,
+        webSearchMode: state.webSearchMode,
         testSend,
       };
 
