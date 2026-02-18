@@ -265,24 +265,7 @@ export function JobOptionsSection() {
           />
           {uiText.jobEditor.options.useWebSearch}
         </label>
-        {state.useWebSearch ? (
-          <div className="mt-1">
-            <label className="text-xs text-zinc-600" htmlFor="job-web-search-mode">
-              {uiText.jobEditor.options.webSearchModeLabel}
-            </label>
-            <select
-              id="job-web-search-mode"
-              value={state.webSearchMode}
-              onChange={(event) =>
-                setState((prev) => ({ ...prev, webSearchMode: event.target.value as "perplexity" | "parallel" }))
-              }
-              className="input-base mt-1 h-10"
-            >
-              <option value="perplexity">{uiText.jobEditor.options.webSearchModes.perplexity}</option>
-              <option value="parallel">{uiText.jobEditor.options.webSearchModes.parallel}</option>
-            </select>
-          </div>
-        ) : null}
+        {state.useWebSearch ? <p className="text-xs text-zinc-500">{uiText.jobEditor.options.webSearchNativeHelp}</p> : null}
         <label className="inline-flex items-center gap-2 text-sm text-zinc-900">
           <input
             type="checkbox"
@@ -567,7 +550,7 @@ export function JobPreviewSection() {
         variables: string;
         useWebSearch: boolean;
         llmModel: string;
-        webSearchMode: "perplexity" | "parallel";
+        webSearchMode: "native";
         testSend: boolean;
         nowIso?: string;
         timezone?: string;
@@ -578,7 +561,7 @@ export function JobPreviewSection() {
         variables: state.variables,
         useWebSearch: state.useWebSearch,
         llmModel: state.llmModel,
-        webSearchMode: state.webSearchMode,
+        webSearchMode: "native",
         testSend,
       };
 

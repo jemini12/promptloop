@@ -184,11 +184,7 @@ export const uiText = {
       modelLabel: "Model",
       modelHelp: "AI Gateway model id (creator/model).",
       useWebSearch: "Use web search",
-      webSearchModeLabel: "Web search mode",
-      webSearchModes: {
-        perplexity: "Perplexity (universal)",
-        parallel: "Parallel (universal)",
-      },
+      webSearchNativeHelp: "Uses the selected model's native web search tool (no Perplexity/Parallel).",
       keepEnabled: "Keep this job enabled after save",
     },
     schedule: {
