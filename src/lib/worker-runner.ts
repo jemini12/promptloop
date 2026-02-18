@@ -5,9 +5,9 @@ import { sendChannelMessage, ChannelRequestError } from "@/lib/channel";
 import { toRunnableChannel } from "@/lib/jobs";
 import { computeNextRunAt } from "@/lib/schedule";
 import { enforceDailyRunLimit } from "@/lib/limits";
-import { renderPromptTemplate } from "@/lib/prompt-template";
 import { getOrCreatePublishedPromptVersion } from "@/lib/prompt-version";
-import { DEFAULT_LLM_MODEL, normalizeWebSearchMode, type WebSearchMode } from "@/lib/llm-defaults";
+import { normalizeLlmModel, normalizeWebSearchMode, type WebSearchMode } from "@/lib/llm-defaults";
+import { compilePromptTemplate, coerceStringVars } from "@/lib/prompt-compile";
 
 const DEFAULT_LOCK_STALE_MINUTES = 10;
 const MAX_FAILS_BEFORE_DISABLE = 10;
@@ -121,7 +121,7 @@ async function deliverWithRetryAndReceipts(
   return { attempts: retries, lastError: "Delivery failed" };
 }
 
-async function runPromptWithRetry(prompt: string, opts: { model: string; allowWebSearch: boolean; webSearchMode: WebSearchMode }) {
+  async function runPromptWithRetry(prompt: string, opts: { model: string; useWebSearch: boolean; webSearchMode: WebSearchMode }) {
   const maxRetries = Number(process.env.WORKER_LLM_MAX_RETRIES ?? 2);
   const retries = Number.isFinite(maxRetries) && maxRetries > 0 ? Math.floor(maxRetries) : 2;
 
@@ -180,9 +180,8 @@ export async function runDueJobs(opts: { timeBudgetMs: number; maxJobs: number; 
 
     const scheduledFor = job.nextRunAt;
     const pv = job.publishedPromptVersion ?? (await getOrCreatePublishedPromptVersion(job.id));
-    const template = pv.template;
-    const vars = (pv.variables as Record<string, string> | null) ?? {};
-    const renderedPrompt = renderPromptTemplate({ template, vars, now: scheduledFor });
+    const vars = coerceStringVars(pv.variables);
+    const prompt = compilePromptTemplate(pv.template, vars, { nowIso: scheduledFor.toISOString(), timezone: "UTC" });
 
     const title = `[${job.name}] ${format(new Date(), "yyyy-MM-dd HH:mm")}`;
 
@@ -241,9 +240,9 @@ export async function runDueJobs(opts: { timeBudgetMs: number; maxJobs: number; 
     let error: unknown;
     try {
       await enforceDailyRunLimit(job.userId);
-      const llm = await runPromptWithRetry(renderedPrompt, {
-        model: job.llmModel ?? DEFAULT_LLM_MODEL,
-        allowWebSearch: job.allowWebSearch,
+      const llm = await runPromptWithRetry(prompt, {
+        model: normalizeLlmModel(job.llmModel),
+        useWebSearch: job.allowWebSearch,
         webSearchMode: normalizeWebSearchMode(job.webSearchMode),
       });
       output = llm.output;

@@ -45,8 +45,8 @@ function buildEnhancerInstructions(allowStrongerRewrite: boolean): string {
   return [
     "You are a prompt editor.",
     "Return JSON only with keys: improved_template (string), suggested_variables (object of string->string), rationale (string), warnings (array of strings).",
-    "The improved_template must remain a single prompt template (not a conversation).",
-    "Keep any {{var_name}} placeholders; do not rename placeholders unless necessary to fix inconsistencies (if you rename, add a warning).",
+    "The improved_template must remain a single prompt (not a conversation).",
+    "Do not introduce new {{var_name}} placeholders. If the original prompt contains {{...}} placeholders, keep them unchanged.",
     allowStrongerRewrite ? strongerRules : strictRules,
     "Do not include markdown code fences.",
   ].join("\n");

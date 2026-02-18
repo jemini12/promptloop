@@ -3,7 +3,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/authz";
 import { errorResponse } from "@/lib/http";
-import { renderPromptTemplate } from "@/lib/prompt-template";
 import { runPrompt } from "@/lib/llm";
 import { DEFAULT_LLM_MODEL, DEFAULT_WEB_SEARCH_MODE } from "@/lib/llm-defaults";
 
@@ -13,19 +12,6 @@ const runSchema = z.object({ suiteId: z.string().min(1).max(64) });
 
 function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v) => typeof v === "string" && v.length > 0) : [];
-}
-
-function asVars(value: unknown): Record<string, string> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return {};
-  }
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-    if (typeof k === "string" && typeof v === "string") {
-      out[k] = v;
-    }
-  }
-  return out;
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
@@ -61,18 +47,16 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Suite not found" }, { status: 404 });
     }
 
-    const now = new Date();
     const results: Array<{ caseId: string; pass: boolean; missing: string[]; outputPreview?: string; error?: string }> = [];
 
     for (const c of suite.cases.slice(0, 10)) {
-      const vars = asVars(c.variables);
       const mustInclude = asStringArray(c.mustInclude);
-      const prompt = renderPromptTemplate({ template: pv.template, vars, now });
+      const prompt = pv.template;
 
       try {
         const llm = await runPrompt(prompt, {
           model: DEFAULT_LLM_MODEL,
-          allowWebSearch: false,
+          useWebSearch: false,
           webSearchMode: DEFAULT_WEB_SEARCH_MODE,
         });
         const out = llm.output;

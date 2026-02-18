@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         userId,
         name: parsed.name,
         prompt: parsed.template,
-        allowWebSearch: parsed.allowWebSearch,
+        allowWebSearch: parsed.useWebSearch,
         llmModel: parsed.llmModel || null,
         webSearchMode: parsed.webSearchMode || null,
         scheduleType: parsed.scheduleType,
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       entityType: "job",
       entityId: updated.id,
       data: {
-        allowWebSearch: updated.allowWebSearch,
+        useWebSearch: updated.allowWebSearch,
         llmModel: updated.llmModel,
         webSearchMode: updated.webSearchMode,
         scheduleType: updated.scheduleType,

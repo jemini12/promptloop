@@ -9,9 +9,9 @@ import { runPrompt } from "@/lib/llm";
 import { sendChannelMessage } from "@/lib/channel";
 import { toRunnableChannel } from "@/lib/jobs";
 import { enforceDailyRunLimit } from "@/lib/limits";
-import { renderPromptTemplate } from "@/lib/prompt-template";
 import { getOrCreatePublishedPromptVersion } from "@/lib/prompt-version";
-import { DEFAULT_LLM_MODEL, normalizeWebSearchMode } from "@/lib/llm-defaults";
+import { normalizeLlmModel, normalizeWebSearchMode } from "@/lib/llm-defaults";
+import { compilePromptTemplate, coerceStringVars } from "@/lib/prompt-compile";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -32,13 +32,12 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
 
     const pv = job.publishedPromptVersion ?? (await getOrCreatePublishedPromptVersion(job.id));
-    const template = pv.template;
-    const vars = (pv.variables as Record<string, string> | null) ?? {};
-    const prompt = renderPromptTemplate({ template, vars });
+    const vars = coerceStringVars(pv.variables);
+    const prompt = compilePromptTemplate(pv.template, vars);
 
     const result = await runPrompt(prompt, {
-      model: job.llmModel ?? DEFAULT_LLM_MODEL,
-      allowWebSearch: job.allowWebSearch,
+      model: normalizeLlmModel(job.llmModel),
+      useWebSearch: job.allowWebSearch,
       webSearchMode: normalizeWebSearchMode(job.webSearchMode),
     });
     const title = `[${job.name}] ${format(new Date(), "yyyy-MM-dd HH:mm")}`;
@@ -74,6 +73,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       executedAt: new Date().toISOString(),
       usedWebSearch: result.usedWebSearch,
       citations: result.citations,
+      llmModel: result.llmModel ?? null,
     });
   } catch (error) {
     return errorResponse(error);

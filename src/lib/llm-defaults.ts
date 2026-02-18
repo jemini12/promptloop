@@ -1,4 +1,4 @@
-export const DEFAULT_LLM_MODEL = "openai/gpt-5-mini" as const;
+export const DEFAULT_LLM_MODEL = "google/gemini-3-flash" as const;
 export const DEFAULT_WEB_SEARCH_MODE = "perplexity" as const;
 
 export type WebSearchMode = typeof DEFAULT_WEB_SEARCH_MODE | "parallel";

@@ -7,7 +7,8 @@ import { runPrompt } from "@/lib/llm";
 import { sendChannelMessage } from "@/lib/channel";
 import { prisma } from "@/lib/prisma";
 import { enforceDailyRunLimit } from "@/lib/limits";
-import { renderPromptTemplate } from "@/lib/prompt-template";
+import { normalizeLlmModel } from "@/lib/llm-defaults";
+import { compilePromptTemplate, coerceStringVars } from "@/lib/prompt-compile";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,15 +17,16 @@ export async function POST(request: NextRequest) {
     const payload = previewSchema.parse(await request.json());
 
     const now = payload.nowIso ? new Date(payload.nowIso) : new Date();
-    const vars = payload.variables ? (JSON.parse(payload.variables || "{}") as Record<string, string>) : {};
-    const prompt = renderPromptTemplate({ template: payload.template, vars, now, timezone: payload.timezone });
+    const rawVars = JSON.parse(payload.variables || "{}") as unknown;
+    const vars = coerceStringVars(rawVars);
+    const prompt = compilePromptTemplate(payload.template, vars, { nowIso: payload.nowIso, timezone: payload.timezone });
 
     const result = await runPrompt(prompt, {
-      model: payload.llmModel,
-      allowWebSearch: payload.allowWebSearch,
+      model: normalizeLlmModel(payload.llmModel),
+      useWebSearch: payload.useWebSearch,
       webSearchMode: payload.webSearchMode,
     });
-    const title = `[${payload.name}] ${format(new Date(), "yyyy-MM-dd HH:mm")}`;
+    const title = `[${payload.name}] ${format(now, "yyyy-MM-dd HH:mm")}`;
 
     if (payload.testSend && payload.channel) {
       if (payload.channel.type === "discord") {
@@ -69,6 +71,7 @@ export async function POST(request: NextRequest) {
       executedAt: new Date().toISOString(),
       usedWebSearch: result.usedWebSearch,
       citations: result.citations,
+      llmModel: result.llmModel ?? null,
     });
   } catch (error) {
     return errorResponse(error);

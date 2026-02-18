@@ -44,11 +44,13 @@ export function toDbChannelConfig(channel: IncomingChannel): { channelType: Chan
 }
 
 export function toMaskedApiJob(job: Job) {
+  const { allowWebSearch, ...jobRest } = job;
   if (job.channelType === ChannelType.discord) {
     const raw = job.channelConfig as { webhookUrlEnc: string };
     const webhook = decryptString(raw.webhookUrlEnc);
     return {
-      ...job,
+      ...jobRest,
+      useWebSearch: allowWebSearch,
       channel: {
         type: "discord" as const,
         config: { webhookUrl: maskSecret(webhook) },
@@ -65,7 +67,8 @@ export function toMaskedApiJob(job: Job) {
       payload: string;
     };
     return {
-      ...job,
+      ...jobRest,
+      useWebSearch: allowWebSearch,
       channel: {
         type: "webhook" as const,
         config: {
@@ -80,7 +83,8 @@ export function toMaskedApiJob(job: Job) {
 
   const raw = job.channelConfig as { botTokenEnc: string; chatIdEnc: string };
   return {
-    ...job,
+    ...jobRest,
+    useWebSearch: allowWebSearch,
     channel: {
       type: "telegram" as const,
       config: {

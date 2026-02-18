@@ -37,8 +37,13 @@ const webhookConfigSchema = z.object({
 export const previewSchema = z.object({
   template: z.string().min(1).max(8000),
   variables: z.string().default("{}").optional(),
-  allowWebSearch: z.boolean().default(false),
-  llmModel: z.string().max(128).optional().default(DEFAULT_LLM_MODEL),
+  useWebSearch: z.boolean().default(false),
+  llmModel: z
+    .string()
+    .max(128)
+    .regex(/^[a-z0-9][a-z0-9_-]*\/[A-Za-z0-9._:-]+$/, "llmModel must be a gateway model id like openai/gpt-5-mini")
+    .optional()
+    .default(DEFAULT_LLM_MODEL),
   webSearchMode: z.enum(["perplexity", "parallel"]).optional().default(DEFAULT_WEB_SEARCH_MODE),
   testSend: z.boolean().optional().default(false),
   name: z.string().max(100).optional().default("Preview"),
@@ -76,8 +81,13 @@ export const jobUpsertSchema = z
     name: z.string().min(1).max(100),
     template: z.string().min(1).max(8000),
     variables: z.string().default("{}").optional(),
-    allowWebSearch: z.boolean().default(false),
-    llmModel: z.string().max(128).optional().default(DEFAULT_LLM_MODEL),
+    useWebSearch: z.boolean().default(false),
+    llmModel: z
+      .string()
+      .max(128)
+      .regex(/^[a-z0-9][a-z0-9_-]*\/[A-Za-z0-9._:-]+$/, "llmModel must be a gateway model id like openai/gpt-5-mini")
+      .optional()
+      .default(DEFAULT_LLM_MODEL),
     webSearchMode: z.enum(["perplexity", "parallel"]).optional().default(DEFAULT_WEB_SEARCH_MODE),
     scheduleType: z.enum(["daily", "weekly", "cron"]),
     scheduleTime: z.string().optional().nullable(),

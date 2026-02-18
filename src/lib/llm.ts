@@ -2,13 +2,15 @@ import { generateText, gateway } from "ai";
 import { SERVICE_SYSTEM_PROMPT } from "@/lib/system-prompt";
 import { isRecord } from "@/lib/type-guards";
 import { extractToolCalls, extractToolResults, extractUsage } from "@/lib/ai-result";
-import type { WebSearchMode } from "@/lib/llm-defaults";
+import { DEFAULT_LLM_MODEL, type WebSearchMode } from "@/lib/llm-defaults";
 
 type Citation = { url: string; title?: string };
 
+const WEB_SEARCH_ANSWER_MODEL = DEFAULT_LLM_MODEL;
+
 export type RunPromptOptions = {
   model: string;
-  allowWebSearch: boolean;
+  useWebSearch: boolean;
   webSearchMode: WebSearchMode;
 };
 
@@ -44,10 +46,16 @@ function extractCitationsFromToolResults(toolResults: unknown): Citation[] {
   for (const tr of toolResults) {
     if (!isRecord(tr)) continue;
 
-    const result = tr.result;
-    if (!isRecord(result)) continue;
+    const container =
+      "output" in tr && isRecord((tr as { output?: unknown }).output)
+        ? ((tr as { output: Record<string, unknown> }).output as Record<string, unknown>)
+        : "result" in tr && isRecord((tr as { result?: unknown }).result)
+          ? ((tr as { result: Record<string, unknown> }).result as Record<string, unknown>)
+          : null;
 
-    const results = result.results;
+    if (!container) continue;
+
+    const results = container.results;
     if (!Array.isArray(results)) continue;
 
     for (const r of results) {
@@ -63,48 +71,146 @@ function extractCitationsFromToolResults(toolResults: unknown): Citation[] {
   return dedupeCitations(citations);
 }
 
-export async function runPrompt(prompt: string, opts: RunPromptOptions): Promise<RunPromptResult> {
-  const system = opts.allowWebSearch ? `${SERVICE_SYSTEM_PROMPT}${WEB_SEARCH_POLICY}` : SERVICE_SYSTEM_PROMPT;
+function formatPerplexityResultsForPrompt(toolResults: unknown): string {
+  if (!Array.isArray(toolResults)) return "";
 
-  const result = opts.allowWebSearch
-    ? opts.webSearchMode === "parallel"
-      ? await generateText({
-          model: opts.model,
-          system,
-          prompt,
-          tools: { parallel_search: gateway.tools.parallelSearch() },
-          timeout: 60_000,
-        })
-      : await generateText({
-          model: opts.model,
-          system,
-          prompt,
-          tools: { perplexity_search: gateway.tools.perplexitySearch() },
-          timeout: 60_000,
-        })
-    : await generateText({
-        model: opts.model,
-        system,
-        prompt,
-        timeout: 60_000,
-      });
+  const items: Array<{ title: string; url: string; snippet: string }> = [];
 
-  const output = (result.text ?? "").trim();
-  if (!output) {
-    throw new Error("LLM returned empty output");
+  for (const tr of toolResults) {
+    if (!isRecord(tr)) continue;
+
+    const container =
+      "output" in tr && isRecord((tr as { output?: unknown }).output)
+        ? ((tr as { output: Record<string, unknown> }).output as Record<string, unknown>)
+        : "result" in tr && isRecord((tr as { result?: unknown }).result)
+          ? ((tr as { result: Record<string, unknown> }).result as Record<string, unknown>)
+          : null;
+
+    if (!container) continue;
+    const results = container.results;
+    if (!Array.isArray(results)) continue;
+
+    for (const r of results) {
+      if (!isRecord(r)) continue;
+      const title = typeof r.title === "string" ? r.title : "";
+      const url = typeof r.url === "string" ? r.url : "";
+      const snippet = typeof r.snippet === "string" ? r.snippet : "";
+      if (!url) continue;
+      items.push({ title, url, snippet });
+    }
   }
 
-  const toolCalls = extractToolCalls(result);
-  const toolResults = extractToolResults(result);
-  const citations = extractCitationsFromToolResults(toolResults);
-  const usedWebSearch = opts.allowWebSearch && (Array.isArray(toolCalls) || Array.isArray(toolResults) || citations.length > 0);
+  if (!items.length) return "";
+
+  const limited = items.slice(0, 5);
+  const blocks = limited.map((it, idx) => {
+    const titleLine = it.title && it.title.trim() ? it.title.trim() : "(untitled)";
+    const snippet = it.snippet ? it.snippet.slice(0, 600) : "";
+    return `[${idx + 1}] ${titleLine}\nURL: ${it.url}${snippet ? `\nSnippet: ${snippet}` : ""}`;
+  });
+
+  return blocks.join("\n\n");
+}
+
+export async function runPrompt(prompt: string, opts: RunPromptOptions): Promise<RunPromptResult> {
+  const useWebSearch = opts.useWebSearch;
+  const system = useWebSearch ? `${SERVICE_SYSTEM_PROMPT}${WEB_SEARCH_POLICY}` : SERVICE_SYSTEM_PROMPT;
+  const debug = process.env.DEBUG_WEB_SEARCH === "1" || process.env.DEBUG_LLM === "1";
+
+  if (!useWebSearch) {
+    const result = await generateText({ model: opts.model, system, prompt, timeout: 60_000 });
+    const output = (result.text ?? "").trim();
+    if (!output) throw new Error("LLM returned empty output");
+    return {
+      output,
+      usedWebSearch: false,
+      citations: [],
+      llmModel: opts.model,
+      llmUsage: extractUsage(result) ?? null,
+      llmToolCalls: undefined,
+    };
+  }
+
+  const searchModel = WEB_SEARCH_ANSWER_MODEL;
+  const answerModel = WEB_SEARCH_ANSWER_MODEL;
+  let searchStep: unknown | null = null;
+  let toolCalls: unknown = null;
+  let toolResults: unknown = null;
+  let citations: Citation[] = [];
+  let usedWebSearch = false;
+  let searchError: string | null = null;
+
+  try {
+    searchStep = await generateText({
+      model: searchModel,
+      system,
+      prompt,
+      tools: { perplexity_search: gateway.tools.perplexitySearch() },
+      toolChoice: "required",
+      activeTools: ["perplexity_search"],
+      timeout: 60_000,
+    });
+
+    toolCalls = extractToolCalls(searchStep) ?? null;
+    toolResults = extractToolResults(searchStep) ?? null;
+    citations = extractCitationsFromToolResults(toolResults);
+    usedWebSearch = citations.length > 0;
+
+    if (!usedWebSearch) {
+      searchError = "Web search enabled but no search results";
+    }
+  } catch (err) {
+    searchError = err instanceof Error ? err.message : String(err);
+    usedWebSearch = false;
+    citations = [];
+  }
+
+  const searchContext = usedWebSearch ? formatPerplexityResultsForPrompt(toolResults) : "";
+  const answerPrompt = usedWebSearch
+    ? `${prompt}\n\nWeb search results:\n${searchContext}\n\nAnswer the user using the web search results when relevant. Cite sources by URL when making claims based on the results.`
+    : prompt;
+
+  const answerStep = await generateText({
+    model: answerModel,
+    system,
+    prompt: answerPrompt,
+    timeout: 60_000,
+  });
+
+  const output = (answerStep.text ?? "").trim();
+  if (!output) throw new Error("LLM returned empty output");
+
+  if (debug) {
+    console.info("[web-search] two-step", {
+      searchModel,
+      answerModel,
+      usedWebSearch,
+      error: searchError,
+      toolCalls: Array.isArray(toolCalls) ? toolCalls.length : 0,
+      toolResults: Array.isArray(toolResults) ? toolResults.length : 0,
+      citations: citations.length,
+      answerLen: output.length,
+    });
+  }
 
   return {
     output,
     usedWebSearch,
     citations,
-    llmModel: opts.model,
-    llmUsage: extractUsage(result),
-    llmToolCalls: usedWebSearch ? { toolCalls, toolResults } : undefined,
+    llmModel: answerModel,
+    llmUsage: {
+      searchModel,
+      answerModel,
+      search: searchStep ? (extractUsage(searchStep) ?? null) : null,
+      answer: extractUsage(answerStep) ?? null,
+      searchError,
+    },
+    llmToolCalls: {
+      webSearchMode: opts.webSearchMode,
+      searchModel,
+      toolCalls,
+      toolResults,
+      searchError,
+    },
   };
 }
