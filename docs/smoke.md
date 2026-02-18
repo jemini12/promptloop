@@ -43,6 +43,9 @@ Optional env:
 ## Signed-in smoke (manual)
 
 1) Sign in via `/signin`.
+2) Open `/chat` and send a message.
+   - Verify streaming response renders.
+   - Verify tool calls render output (e.g. `plan_from_intent`).
 2) Create a job at `/jobs/new`.
 3) In Job Options, set:
    - Model: `openai/gpt-5-mini`

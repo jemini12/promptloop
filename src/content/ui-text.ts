@@ -42,6 +42,7 @@ export const uiText = {
     title: "Dashboard",
     description: "Manage schedules and monitor the latest run results.",
     createJob: "Create Job",
+    createWithChat: "Create with chat",
     noJobsTitle: "No jobs yet",
     noJobsDescription: "Create your first scheduled prompt to start automation.",
     actions: {

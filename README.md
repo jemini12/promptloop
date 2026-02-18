@@ -76,6 +76,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/run-
 ## Main Routes
 
 - `/` dashboard
+- `/chat` job builder (chat)
 - `/jobs/new` job editor
 - `/jobs/[id]/edit` job editor (update/delete)
 - `/jobs/[id]/history` run history
@@ -93,6 +94,23 @@ Prompt Writer (enhance) is available inside the Job Editor prompt section.
 - `POST /api/preview`
 - `GET /api/jobs/:id/histories`
 
+Chat:
+
+- `POST /api/chat` (SSE stream)
+- `GET /api/chat/history?chatId=...`
+
 Prompt Writer:
 
 - `POST /api/prompt-writer/enhance`
+
+## Chat Persistence (optional)
+
+The `/chat` flow can persist chat history to the database.
+
+Apply the migration locally:
+
+```bash
+npx prisma migrate dev
+```
+
+Docs: `docs/job-builder-chat.md`

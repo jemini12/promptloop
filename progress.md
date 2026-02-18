@@ -96,6 +96,12 @@
     - `POST /api/prompt-writer/enhance` (strict-by-default; toggle stronger rewrite)
   - Job Editor: Prompt Writer panel to enhance prompts.
 
+- **Job Builder Chat (2026-02-18)**:
+  - Authenticated `/chat` page for chat-based job creation.
+  - Streaming API: `POST /api/chat` with AI SDK UI stream protocol.
+  - Optional persistence: `chats` + `chat_messages` with basic secret redaction.
+  - History API: `GET /api/chat/history?chatId=...`.
+
 ## In Place and Verified
 
 - Next.js production build passes (`npm run build`)

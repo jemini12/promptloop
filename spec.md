@@ -52,6 +52,36 @@
     -   Telegram: Bot API
 -   Analytics: Vercel Analytics
 
+-----------------------------------------------------------------------
+
+## 2.1 Job Builder Chat (추가)
+
+> 목적: 자연어 대화로 Job을 생성/수정/미리보기할 수 있는 보조 UI.
+
+- UI: `/chat` (인증 필요)
+- API: `POST /api/chat` (SSE stream; AI SDK UI message stream)
+- API: `GET /api/chat/history?chatId=...` (선택; 대화 복원)
+
+핵심 요구사항:
+
+- Tool calling을 지원해야 한다 (job plan/create/update/delete/preview 등).
+- Tool 실행 후 후속 응답(확인 질문/다음 단계)을 위해 **multi-step** 실행이 가능해야 한다.
+- 세션 만료 시 401을 반환하고, UI는 `/signin?callbackUrl=/chat`로 재인증 유도.
+
+선택 기능(대화 저장):
+
+- chats/chat_messages 테이블에 메시지를 저장한다 (user_id로 스코프).
+- 저장 전 메시지의 secret(웹훅 URL, bot token 등)을 기본적으로 마스킹/리덕션한다.
+
+Acceptance Criteria:
+
+- 로그인 상태에서 `/chat` 접속 시 스트리밍 응답이 정상 렌더링된다.
+- 사용자가 intent만 입력하면 `plan_from_intent` 결과를 UI에서 확인할 수 있다.
+- 정보가 부족한 경우(예: time 누락) 추가 질문을 하고, 필요한 값이 모이면 job 생성 tool을 호출한다.
+- job 생성 후 `/jobs/[id]/edit`로 이동할 수 있는 링크가 표시된다.
+- 세션 만료 시 `/api/chat`가 401을 반환하고, UI는 `/signin?callbackUrl=/chat`로 리다이렉트한다.
+- (persist=true) 새 chatId로 대화를 시작하면 history API로 복원된다.
+
 ------------------------------------------------------------------------
 
 ## 3. 아키텍처 개요

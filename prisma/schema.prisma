@@ -63,6 +63,7 @@ model User {
   jobs           Job[]
   previewEvents  PreviewEvent[]
   auditLogs      AuditLog[]
+  chats          Chat[]
 
   @@unique([provider, providerUserId])
   @@map("users")
@@ -249,4 +250,35 @@ model PromptWriterTemplate {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("prompt_writer_templates")
+}
+
+model Chat {
+  id        String   @id @db.VarChar(64)
+  userId    String   @map("user_id") @db.Uuid
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId, updatedAt], map: "idx_chats_user_id_updated_at")
+  @@map("chats")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  chatId    String   @map("chat_id") @db.VarChar(64)
+  messageId String   @map("message_id") @db.VarChar(128)
+  role      String
+  content   String   @default("")
+  message   Json     @map("message")
+  redacted  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, messageId], map: "uniq_chat_messages_chat_id_message_id")
+  @@index([chatId, createdAt], map: "idx_chat_messages_chat_id_created_at")
+  @@map("chat_messages")
 }

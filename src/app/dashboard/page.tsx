@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 function SparkIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
       <path d="M12 3l1.9 4.1L18 9l-4.1 1.9L12 15l-1.9-4.1L6 9l4.1-1.9L12 3z" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M5 17l.9 2.1L8 20l-2.1.9L5 23l-.9-2.1L2 20l2.1-.9L5 17z" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z" strokeLinecap="round" strokeLinejoin="round" />
@@ -57,17 +57,29 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div>
-            <LinkButton
-              href="/jobs/new"
-              variant="primary"
-              size="sm"
-              className="gap-2 shadow-sm"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              {uiText.dashboard.createJob}
-            </LinkButton>
+            <div className="flex flex-wrap items-center gap-2">
+              <LinkButton
+                href="/jobs/new"
+                variant="primary"
+                size="sm"
+                className="gap-2 shadow-sm"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                {uiText.dashboard.createJob}
+              </LinkButton>
+              <LinkButton href="/chat" variant="secondary" size="sm" className="gap-2 shadow-sm">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
+                  />
+                </svg>
+                {uiText.dashboard.createWithChat}
+              </LinkButton>
+            </div>
           </div>
         </div>
 
