@@ -5,7 +5,7 @@ export type JobFormState = {
   prompt: string;
   variables: string;
   llmModel: string;
-  allowWebSearch: boolean;
+  useWebSearch: boolean;
   webSearchMode: WebSearchMode;
   scheduleType: "daily" | "weekly" | "cron";
   time: string;
@@ -31,6 +31,8 @@ export type JobFormState = {
     errorMessage?: string;
     executedAt?: string;
     usedWebSearch?: boolean;
+    llmModel?: string | null;
+    citations?: Array<{ url: string; title?: string }>;
   };
 };
 
@@ -39,7 +41,7 @@ export const defaultJobFormState: JobFormState = {
   prompt: "",
   variables: "{}",
   llmModel: DEFAULT_LLM_MODEL,
-  allowWebSearch: false,
+  useWebSearch: false,
   webSearchMode: DEFAULT_WEB_SEARCH_MODE,
   scheduleType: "daily",
   time: "09:00",

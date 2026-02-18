@@ -1,25 +1,13 @@
 "use client";
 
 import cronstrue from "cronstrue";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useJobForm } from "@/components/job-editor/job-form-provider";
 import { Button } from "@/components/ui/button";
 import { uiText } from "@/content/ui-text";
-import { DEFAULT_LLM_MODEL } from "@/lib/llm-defaults";
 
 const sectionClass = "surface-card";
 const dayOptions = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-function asPrettyJsonObjectString(value: unknown): string | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return null;
-  }
-}
 
 function describeCron(expression: string) {
   if (!expression.trim()) {
@@ -55,57 +43,10 @@ export function JobHeaderSection() {
 
 export function JobPromptSection() {
   const { state, setState } = useJobForm();
-  const [templates, setTemplates] = useState<
-    Array<{ key: string; name: string; description: string | null; template: string; defaultVariables: unknown }>
-  >([]);
-  const [templatesStatus, setTemplatesStatus] = useState<"idle" | "loading" | "ready" | "fail">("idle");
-  const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [allowStrongerRewrite, setAllowStrongerRewrite] = useState(false);
   const [enhanceError, setEnhanceError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    async function load() {
-      setTemplatesStatus("loading");
-      try {
-        const response = await fetch("/api/prompt-writer/templates", { signal: controller.signal });
-        const data = (await response.json()) as {
-          templates?: Array<{ key: string; name: string; description: string | null; template: string; defaultVariables: unknown }>;
-          error?: string;
-        };
-        if (!response.ok) {
-          throw new Error(data.error ?? "Failed to load templates");
-        }
-        if (controller.signal.aborted) return;
-        const list = Array.isArray(data.templates) ? data.templates : [];
-        setTemplates(list);
-        setSelectedTemplateKey((prev) => prev || (list[0]?.key ?? ""));
-        setTemplatesStatus("ready");
-      } catch {
-        if (controller.signal.aborted) return;
-        setTemplatesStatus("fail");
-      }
-    }
-
-    void load();
-    return () => {
-      controller.abort();
-    };
-  }, []);
-
-  function applySelectedTemplate() {
-    const selected = templates.find((t) => t.key === selectedTemplateKey);
-    if (!selected) return;
-
-    const variablesJson = asPrettyJsonObjectString(selected.defaultVariables) ?? "{}";
-
-    setState((prev) => ({
-      ...prev,
-      prompt: selected.template,
-      variables: variablesJson,
-    }));
-  }
 
   async function enhance() {
     if (!state.prompt.trim()) return;
@@ -133,16 +74,10 @@ export function JobPromptSection() {
         throw new Error(uiText.jobEditor.prompt.writer.enhanceFailed);
       }
 
-      let nextVariables: string | null = null;
-      nextVariables = asPrettyJsonObjectString(data.suggestedVariables);
-
       setState((prev) => ({
         ...prev,
         prompt: improved,
-        variables:
-          nextVariables && (prev.variables.trim() === "" || prev.variables.trim() === "{}")
-            ? nextVariables
-            : prev.variables,
+        variables: prev.variables,
       }));
     } catch (error) {
       setEnhanceError(error instanceof Error ? error.message : uiText.jobEditor.prompt.writer.enhanceFailed);
@@ -157,130 +92,139 @@ export function JobPromptSection() {
         <label className="field-label" htmlFor="job-prompt">
           {uiText.jobEditor.prompt.label}
         </label>
-        <div className="flex items-center gap-2">
-          {state.prompt ? (
-            <Button
-              type="button"
-              onClick={() => setState((prev) => ({ ...prev, prompt: "" }))}
-              variant="ghost"
-              size="sm"
-              className="text-zinc-500 hover:text-red-600"
-              aria-label="Clear prompt"
-            >
-              {uiText.jobEditor.prompt.clear}
-            </Button>
-          ) : null}
+      </div>
+      <p className="field-help">{uiText.jobEditor.prompt.description}</p>
+
+      <div className="mt-3">
+        <div className="flex items-center justify-between gap-3">
+          <label className="flex items-center gap-2 text-xs text-zinc-700">
+            <input
+              type="checkbox"
+              checked={allowStrongerRewrite}
+              onChange={(event) => setAllowStrongerRewrite(event.target.checked)}
+              disabled={enhancing}
+            />
+            <span>{uiText.jobEditor.prompt.writer.strongerRewrite}</span>
+          </label>
           <Button
             type="button"
-            onClick={() =>
-              setState((prev) => ({
-                ...prev,
-                prompt: uiText.jobEditor.prompt.examplePrompt,
-              }))
-            }
+            onClick={enhance}
             variant="secondary"
             size="sm"
             className="shadow-sm"
+            loading={enhancing}
+            disabled={enhancing || !state.prompt.trim()}
           >
-            {uiText.jobEditor.prompt.useExample}
+            {enhancing ? uiText.jobEditor.prompt.writer.enhancing : uiText.jobEditor.prompt.writer.enhance}
           </Button>
         </div>
-      </div>
-      <p className="field-help">{uiText.jobEditor.prompt.description}</p>
-      <textarea
-        id="job-prompt"
-        value={state.prompt}
-        onChange={(event) => setState((prev) => ({ ...prev, prompt: event.target.value }))}
-        className="input-base mt-2 h-44 resize-y"
-        placeholder={uiText.jobEditor.prompt.placeholder}
-      />
-
-      <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-zinc-900">{uiText.jobEditor.prompt.writer.title}</p>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              onClick={enhance}
-              variant="secondary"
-              size="sm"
-              className="shadow-sm"
-              loading={enhancing}
-              disabled={enhancing || !state.prompt.trim()}
-            >
-              {enhancing ? uiText.jobEditor.prompt.writer.enhancing : uiText.jobEditor.prompt.writer.enhance}
-            </Button>
-            <Button
-              type="button"
-              onClick={applySelectedTemplate}
-              variant="secondary"
-              size="sm"
-              className="shadow-sm"
-              disabled={templatesStatus !== "ready" || !selectedTemplateKey}
-            >
-              {uiText.jobEditor.prompt.writer.applyTemplate}
-            </Button>
-          </div>
-        </div>
-        <label className="mt-2 flex items-center gap-2 text-xs text-zinc-700">
-          <input
-            type="checkbox"
-            checked={allowStrongerRewrite}
-            onChange={(event) => setAllowStrongerRewrite(event.target.checked)}
-            disabled={enhancing}
-          />
-          <span>{uiText.jobEditor.prompt.writer.strongerRewrite}</span>
-        </label>
         {enhanceError ? <p className="mt-2 text-xs text-red-600">{enhanceError}</p> : null}
-        <div className="mt-2 grid gap-2 sm:grid-cols-3">
-          <label className="text-xs text-zinc-600 sm:col-span-1" htmlFor="prompt-writer-template">
-            {uiText.jobEditor.prompt.writer.templatesLabel}
-          </label>
-          <div className="sm:col-span-2">
-            <select
-              id="prompt-writer-template"
-              value={selectedTemplateKey}
-              onChange={(event) => setSelectedTemplateKey(event.target.value)}
-              className="input-base h-10"
-              disabled={templatesStatus !== "ready"}
-            >
-              {templates.map((t) => (
-                <option key={t.key} value={t.key}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-            {templatesStatus === "loading" ? (
-              <p className="mt-2 text-xs text-zinc-500">{uiText.jobEditor.prompt.writer.templatesLoading}</p>
-            ) : templatesStatus === "fail" ? (
-              <p className="mt-2 text-xs text-red-600">{uiText.jobEditor.prompt.writer.templatesFailed}</p>
-            ) : null}
-            {templatesStatus === "ready" ? (
-              <p className="mt-2 text-xs text-zinc-500">
-                {templates.find((t) => t.key === selectedTemplateKey)?.description ?? ""}
-              </p>
-            ) : null}
-          </div>
-        </div>
-      </div>
 
-      <label className="field-label mt-4" htmlFor="job-variables">
-        {uiText.jobEditor.prompt.variablesLabel}
-      </label>
-      <p className="field-help">{uiText.jobEditor.prompt.variablesHelp}</p>
-      <textarea
-        id="job-variables"
-        value={state.variables}
-        onChange={(event) => setState((prev) => ({ ...prev, variables: event.target.value }))}
-        className="input-base mt-2 h-28 resize-y"
-        placeholder='{"topic":"...","audience":"..."}'
-      />
+        <details
+          className="mt-4 rounded-lg border border-zinc-200 bg-white p-3"
+          open={advancedOpen}
+          onToggle={(event) => {
+            setAdvancedOpen((event.currentTarget as HTMLDetailsElement).open);
+          }}
+        >
+          <summary className="cursor-pointer text-sm font-medium text-zinc-900">
+            {uiText.jobEditor.prompt.writer.advancedSummary}
+          </summary>
+          <div className="mt-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-zinc-700">{uiText.jobEditor.prompt.writer.advancedLabel}</p>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  onClick={() => setState((prev) => ({ ...prev, prompt: "" }))}
+                  variant="ghost"
+                  size="sm"
+                  className="text-zinc-500 hover:text-red-600"
+                >
+                  {uiText.jobEditor.prompt.clear}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() =>
+                    setState((prev) => ({
+                      ...prev,
+                      prompt: uiText.jobEditor.prompt.examplePrompt,
+                    }))
+                  }
+                  variant="secondary"
+                  size="sm"
+                  className="shadow-sm"
+                >
+                  {uiText.jobEditor.prompt.useExample}
+                </Button>
+              </div>
+            </div>
+            <textarea
+              id="job-prompt"
+              value={state.prompt}
+              onChange={(event) => setState((prev) => ({ ...prev, prompt: event.target.value }))}
+              className="input-base mt-2 h-44 resize-y"
+              placeholder={uiText.jobEditor.prompt.placeholder}
+            />
+          </div>
+        </details>
+      </div>
     </section>
   );
 }
 
 export function JobOptionsSection() {
   const { state, setState } = useJobForm();
+
+  const [models, setModels] = useState<Array<{ id: string; name: string }> | null>(null);
+  const [modelsLoading, setModelsLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadModels() {
+      setModelsLoading(true);
+      try {
+        const response = await fetch("/api/models", { method: "GET" });
+        if (!response.ok) {
+          return;
+        }
+        const data = (await response.json()) as unknown;
+        const listRaw =
+          data && typeof data === "object" && data !== null && "models" in data
+            ? (data as { models?: unknown }).models
+            : [];
+        const list = Array.isArray(listRaw)
+          ? listRaw
+              .map((m) => {
+                if (!m || typeof m !== "object") return null;
+                const id = (m as { id?: unknown }).id;
+                const name = (m as { name?: unknown }).name;
+                if (typeof id !== "string" || !id.trim()) return null;
+                return { id, name: typeof name === "string" && name.trim() ? name : id };
+              })
+              .filter((m): m is { id: string; name: string } => Boolean(m))
+          : [];
+        if (!cancelled) {
+          setModels(list);
+        }
+      } finally {
+        if (!cancelled) {
+          setModelsLoading(false);
+        }
+      }
+    }
+
+    void loadModels();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const modelOptions = (() => {
+    if (!models || models.length === 0) return null;
+    const hasCurrent = models.some((m) => m.id === state.llmModel);
+    return hasCurrent ? models : [{ id: state.llmModel, name: state.llmModel }, ...models];
+  })();
 
   return (
     <section className={sectionClass}>
@@ -289,23 +233,39 @@ export function JobOptionsSection() {
         <label className="text-xs text-zinc-600" htmlFor="job-llm-model">
           {uiText.jobEditor.options.modelLabel}
         </label>
-        <input
-          id="job-llm-model"
-          value={state.llmModel}
-          onChange={(event) => setState((prev) => ({ ...prev, llmModel: event.target.value }))}
-          className="input-base h-10"
-          placeholder={DEFAULT_LLM_MODEL}
-        />
+        {modelOptions ? (
+          <select
+            id="job-llm-model"
+            value={state.llmModel}
+            onChange={(event) => setState((prev) => ({ ...prev, llmModel: event.target.value }))}
+            className="input-base h-10"
+            disabled={modelsLoading}
+          >
+            {modelOptions.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            id="job-llm-model"
+            value={state.llmModel}
+            onChange={(event) => setState((prev) => ({ ...prev, llmModel: event.target.value }))}
+            className="input-base h-10"
+            placeholder="openai/gpt-5-mini"
+          />
+        )}
         <p className="text-xs text-zinc-500">{uiText.jobEditor.options.modelHelp}</p>
         <label className="inline-flex items-center gap-2 text-sm text-zinc-900">
           <input
             type="checkbox"
-            checked={state.allowWebSearch}
-            onChange={(event) => setState((prev) => ({ ...prev, allowWebSearch: event.target.checked }))}
+            checked={state.useWebSearch}
+            onChange={(event) => setState((prev) => ({ ...prev, useWebSearch: event.target.checked }))}
           />
-          {uiText.jobEditor.options.allowWebSearch}
+          {uiText.jobEditor.options.useWebSearch}
         </label>
-        {state.allowWebSearch ? (
+        {state.useWebSearch ? (
           <div className="mt-1">
             <label className="text-xs text-zinc-600" htmlFor="job-web-search-mode">
               {uiText.jobEditor.options.webSearchModeLabel}
@@ -582,14 +542,30 @@ export function JobPreviewSection() {
   const [runAt, setRunAt] = useState("");
   const [timezone, setTimezone] = useState("");
 
+  const previewAbortRef = useRef<AbortController | null>(null);
+  const previewSeqRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      previewAbortRef.current?.abort();
+    };
+  }, []);
+
+  const previewDisabled = state.preview.loading || !state.prompt.trim();
+
   async function preview() {
+    const seq = ++previewSeqRef.current;
+    previewAbortRef.current?.abort();
+    const controller = new AbortController();
+    previewAbortRef.current = controller;
+
     setState((prev) => ({ ...prev, preview: { ...prev.preview, loading: true, status: "idle" } }));
     try {
       const payload: {
         name: string;
         template: string;
         variables: string;
-        allowWebSearch: boolean;
+        useWebSearch: boolean;
         llmModel: string;
         webSearchMode: "perplexity" | "parallel";
         testSend: boolean;
@@ -600,7 +576,7 @@ export function JobPreviewSection() {
         name: state.name || uiText.jobEditor.preview.defaultName,
         template: state.prompt,
         variables: state.variables,
-        allowWebSearch: state.allowWebSearch,
+        useWebSearch: state.useWebSearch,
         llmModel: state.llmModel,
         webSearchMode: state.webSearchMode,
         testSend,
@@ -624,12 +600,37 @@ export function JobPreviewSection() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
 
-      const data = (await response.json()) as { output?: string; error?: string; executedAt?: string; usedWebSearch?: boolean };
+      if (seq !== previewSeqRef.current) {
+        return;
+      }
+
+      const data = (await response.json()) as {
+        output?: string;
+        error?: string;
+        executedAt?: string;
+        usedWebSearch?: boolean;
+        llmModel?: string | null;
+        citations?: Array<{ url?: unknown; title?: unknown }>;
+      };
       if (!response.ok) {
         throw new Error(data.error ?? uiText.jobEditor.preview.failed);
       }
+
+      const citations = Array.isArray(data.citations)
+        ? data.citations.reduce(
+            (acc, c) => {
+              const url = typeof c?.url === "string" ? c.url : "";
+              if (!url) return acc;
+              const title = typeof c?.title === "string" && c.title.trim() ? c.title : undefined;
+              acc.push(title ? { url, title } : { url });
+              return acc;
+            },
+            [] as Array<{ url: string; title?: string }>,
+          )
+        : [];
 
       setState((prev) => ({
         ...prev,
@@ -639,9 +640,17 @@ export function JobPreviewSection() {
           output: data.output,
           executedAt: data.executedAt,
           usedWebSearch: data.usedWebSearch,
+          llmModel: data.llmModel ?? null,
+          citations,
         },
       }));
     } catch (error) {
+      if (seq !== previewSeqRef.current) {
+        return;
+      }
+      if (error && typeof error === "object" && "name" in error && (error as { name?: unknown }).name === "AbortError") {
+        return;
+      }
       setState((prev) => ({
         ...prev,
         preview: {
@@ -650,6 +659,10 @@ export function JobPreviewSection() {
           errorMessage: error instanceof Error ? error.message : uiText.jobEditor.preview.unknownError,
         },
       }));
+    } finally {
+      if (seq === previewSeqRef.current && previewAbortRef.current === controller) {
+        previewAbortRef.current = null;
+      }
     }
   }
 
@@ -664,7 +677,7 @@ export function JobPreviewSection() {
           size="sm"
           loading={state.preview.loading}
           className="shadow-sm"
-          disabled={state.preview.loading}
+          disabled={previewDisabled}
         >
           {state.preview.loading ? uiText.jobEditor.preview.running : uiText.jobEditor.preview.run}
         </Button>
@@ -707,6 +720,40 @@ export function JobPreviewSection() {
             ? state.preview.errorMessage
             : uiText.jobEditor.preview.empty}
       </pre>
+      {state.preview.status === "success" ? (
+        <div className="mt-2 text-xs text-zinc-600">
+          <p>
+            {state.preview.executedAt ? `Executed: ${state.preview.executedAt}` : null}
+            {state.preview.llmModel ? ` · Model: ${state.preview.llmModel}` : null}
+            {typeof state.preview.usedWebSearch === "boolean"
+              ? state.preview.usedWebSearch
+                ? " · Web search: on"
+                : state.useWebSearch
+                  ? " · Web search: skipped"
+                  : " · Web search: off"
+              : null}
+          </p>
+          {state.preview.citations && state.preview.citations.length ? (
+            <div className="mt-2">
+              <p className="font-medium text-zinc-800">Sources</p>
+              <ul className="mt-1 space-y-0.5">
+                {state.preview.citations.slice(0, 5).map((c) => (
+                  <li key={c.url}>
+                    <a
+                      className="underline decoration-zinc-300 underline-offset-2"
+                      href={c.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {c.title && c.title.trim() ? c.title : c.url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

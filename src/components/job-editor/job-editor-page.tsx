@@ -95,7 +95,7 @@ function JobActionsSection({ jobId }: { jobId?: string }) {
         name: state.name,
         template: state.prompt,
         variables: state.variables,
-        allowWebSearch: state.allowWebSearch,
+        useWebSearch: state.useWebSearch,
         llmModel: state.llmModel,
         webSearchMode: state.webSearchMode,
         scheduleType: state.scheduleType,
