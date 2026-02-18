@@ -92,11 +92,9 @@
   - Eval suite/case/run tables added (`eval_suites`, `eval_cases`, `eval_runs`) with API endpoints to create suites and execute eval runs for a specific PromptVersion.
 
 - **Prompt Writer (2026-02-17)**:
-  - DB-backed prompt templates (`prompt_writer_templates`) with seeded built-ins.
-  - Auth-protected APIs:
-    - `GET /api/prompt-writer/templates`
+  - Auth-protected API:
     - `POST /api/prompt-writer/enhance` (strict-by-default; toggle stronger rewrite)
-  - Job Editor: Prompt Writer panel to apply templates and enhance prompts.
+  - Job Editor: Prompt Writer panel to enhance prompts.
 
 ## In Place and Verified
 
@@ -110,7 +108,7 @@
 
 - Dev server restart: `npm run dev` boots cleanly.
 - HTTP smoke checks (logged out): `/`, `/help`, `/signin` return 200; protected APIs return 401.
-- Unit-style checks: prompt template rendering built-ins and webhook default payload/meta shaping.
+- Unit-style checks: webhook default payload/meta shaping.
 - Known dev-only noise: if you have stale `next-auth.*` cookies after secret/env changes, you may see `JWT_SESSION_ERROR` until cookies are cleared.
 
 Dev auth troubleshooting notes (common):

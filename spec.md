@@ -323,7 +323,7 @@ Auth: - OAuth 로그인 (Google, GitHub, Discord) - 자체 비밀번호
 
 -   name: string
 -   prompt: string
--   allowWebSearch: boolean
+-   useWebSearch: boolean
 -   scheduleType: 'daily'\|'weekly'\|'cron'
 -   time: string
 -   dayOfWeek?: number
@@ -357,7 +357,7 @@ Auth: - OAuth 로그인 (Google, GitHub, Discord) - 자체 비밀번호
 
 -   유저가 Job 단위로 다음을 선택 가능해야 한다.
     -   `llmModel`: 실행 모델 (예: `openai/gpt-5-mini`, `anthropic/...`, `google/...`)
-    -   `allowWebSearch`: 웹 검색 ON/OFF (기본 OFF)
+-   `useWebSearch`: 웹 검색 ON/OFF (기본 OFF)
     -   `webSearchMode`: 웹 검색 방식
         -   `universal_perplexity` (Gateway tool: Perplexity Search)
         -   `universal_parallel` (Gateway tool: Parallel Search)
@@ -372,9 +372,9 @@ Auth: - OAuth 로그인 (Google, GitHub, Discord) - 자체 비밀번호
 ### 18.3 API/실행 경로 변경
 
 -   Preview 및 워커 실행 모두 동일한 선택 규칙을 사용한다.
-    -   `allowWebSearch=false`:
+-   `useWebSearch=false`:
         -   어떤 검색 tool도 붙이지 않는다.
-    -   `allowWebSearch=true`:
+-   `useWebSearch=true`:
         -   `webSearchMode`에 따라 Gateway Web Search tool을 붙인다.
 
 ### 18.4 Fallback/라우팅 규칙
@@ -387,7 +387,7 @@ Auth: - OAuth 로그인 (Google, GitHub, Discord) - 자체 비밀번호
 
 -   JobOptionsSection에 다음 UI를 제공
     -   Model select (`llmModel`)
-    -   Web search checkbox (`allowWebSearch`)
+-   Web search checkbox (`useWebSearch`)
     -   Web search mode select (`webSearchMode`) --- 웹 검색 ON일 때만 노출
     -   비용 안내(Perplexity/Parallel 등 유료 웹검색은 ON 시 고지)
 

@@ -4,7 +4,7 @@ Goal: support multiple models through Vercel AI Gateway, while keeping web searc
 
 ## Principles
 
-- Web search is never forced. User must opt in per job (`allowWebSearch=true`).
+- Web search is never forced. User must opt in per job (`useWebSearch=true`).
 - When web search is enabled, never route/fallback to a provider/model combination that cannot satisfy the selected search mode.
 - Preview and scheduled runs share the same model/tool policy.
 
@@ -35,8 +35,8 @@ Goal: support multiple models through Vercel AI Gateway, while keeping web searc
 
 ### Execution Policy
 
-- If `allowWebSearch=false`: do not attach any search tools.
-- If `allowWebSearch=true`: attach the tool implied by `webSearchMode`.
+- If `useWebSearch=false`: do not attach any search tools.
+- If `useWebSearch=true`: attach the tool implied by `webSearchMode`.
 
 ### Routing / Fallback Policy (AI Gateway)
 

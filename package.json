@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "check:ui-controls": "bash scripts/check-ui-controls.sh",
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:ai-gateway": "node scripts/ai-gateway-smoke.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },

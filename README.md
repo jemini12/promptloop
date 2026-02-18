@@ -35,6 +35,12 @@ npm run prisma:generate
 npm run dev
 ```
 
+Smoke test (requires dev server running):
+
+```bash
+npm run smoke
+```
+
 Apply DB schema:
 
 ```bash
@@ -75,7 +81,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/run-
 - `/jobs/[id]/history` run history
 - `/signin` social sign-in page
 
-Prompt Writer (templates + enhance) is available inside the Job Editor prompt section.
+Prompt Writer (enhance) is available inside the Job Editor prompt section.
 
 ## API
 
@@ -89,5 +95,4 @@ Prompt Writer (templates + enhance) is available inside the Job Editor prompt se
 
 Prompt Writer:
 
-- `GET /api/prompt-writer/templates`
 - `POST /api/prompt-writer/enhance`
