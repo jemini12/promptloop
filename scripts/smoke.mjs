@@ -71,7 +71,7 @@ async function main() {
       variables: "{}",
       useWebSearch: false,
       llmModel: "openai/gpt-5-mini",
-      webSearchMode: "perplexity",
+      webSearchMode: "native",
       testSend: false,
       name: "Preview",
     });
