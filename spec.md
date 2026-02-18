@@ -393,6 +393,7 @@ Auth: - OAuth 로그인 (Google, GitHub, Discord) - 자체 비밀번호
 
 -   `AI_GATEWAY_API_KEY`: Vercel AI Gateway 인증키
 -   provider-specific 검색 도구를 사용할 경우 provider별 키/BYOK 정책은 Gateway 문서에 따름
+-   구현은 provider-native web search tool 정의를 위해 AI SDK provider packages를 사용한다 (`@ai-sdk/openai`, `@ai-sdk/anthropic`, `@ai-sdk/google`).
 
 ------------------------------------------------------------------------
 
