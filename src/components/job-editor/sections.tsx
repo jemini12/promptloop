@@ -550,7 +550,7 @@ export function JobPreviewSection() {
         variables: string;
         useWebSearch: boolean;
         llmModel: string;
-        webSearchMode: "native";
+        webSearchMode: typeof state.webSearchMode;
         testSend: boolean;
         nowIso?: string;
         timezone?: string;
@@ -561,7 +561,7 @@ export function JobPreviewSection() {
         variables: state.variables,
         useWebSearch: state.useWebSearch,
         llmModel: state.llmModel,
-        webSearchMode: "native",
+        webSearchMode: state.webSearchMode,
         testSend,
       };
 
