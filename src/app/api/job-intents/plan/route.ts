@@ -5,6 +5,8 @@ import { errorResponse } from "@/lib/http";
 import { DEFAULT_LLM_MODEL, DEFAULT_WEB_SEARCH_MODE } from "@/lib/llm-defaults";
 import { generatePromptDraftFromIntent, inferUseWebSearch, proposeSchedule } from "@/lib/job-intents";
 
+export const maxDuration = 300;
+
 const bodySchema = z.object({
   intentText: z.string().min(1).max(8000),
 });

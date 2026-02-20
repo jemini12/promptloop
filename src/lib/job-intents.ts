@@ -1,4 +1,5 @@
 import { generateText } from "ai";
+import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { DEFAULT_LLM_MODEL, DEFAULT_WEB_SEARCH_MODE } from "@/lib/llm-defaults";
 import { CronExpressionParser } from "cron-parser";
@@ -52,9 +53,19 @@ function normalizeTimeMatch(match: { hour: number; minute: number; ampm: string 
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
+function normalizeIntentTextForSchedule(intentText: string): string {
+  return intentText
+    .replace(/everyday/gi, "every day")
+    .replace(/(\d)(am|pm)([a-z])/gi, "$1$2 $3")
+    .replace(/\b(a\.?m\.?|p\.?m\.?)\b/gi, (m) => m.replace(/\./g, ""))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function findTime(intentText: string): string | null {
-  const re = /\b([01]?\d|2[0-3])(?::([0-5]\d))\s*(am|pm)?\b/i;
-  const m = intentText.match(re);
+  const normalized = normalizeIntentTextForSchedule(intentText);
+  const re = /\b([01]?\d|2[0-3])(?::([0-5]\d))?\s*(am|pm)?\b/i;
+  const m = normalized.match(re);
   if (!m) return null;
   const hour = Number(m[1]);
   const minute = m[2] ? Number(m[2]) : 0;
@@ -110,6 +121,7 @@ function findWeeklyDay(intentText: string): number | null {
 }
 
 export function proposeSchedule(intentText: string): { schedule: ProposedSchedule | null; clarifications: PlanClarification[] } {
+  const normalizedIntentText = normalizeIntentTextForSchedule(intentText);
   const cron = parseCronFromIntent(intentText);
   if (cron) {
     return {
@@ -124,9 +136,9 @@ export function proposeSchedule(intentText: string): { schedule: ProposedSchedul
     };
   }
 
-  const time = findTime(intentText);
-  const weeklyDay = findWeeklyDay(intentText);
-  const lower = intentText.toLowerCase();
+  const time = findTime(normalizedIntentText);
+  const weeklyDay = findWeeklyDay(normalizedIntentText);
+  const lower = normalizedIntentText.toLowerCase();
   const weekdays = lower.includes("weekday") || lower.includes("weekdays");
   const weekends = lower.includes("weekend") || lower.includes("weekends");
   const everyMinutes = lower.match(/\bevery\s+(\d{1,2})\s+minutes?\b/);
@@ -253,7 +265,7 @@ export async function generatePromptDraftFromIntent(intentText: string): Promise
   ].join("\n");
 
   const result = await generateText({
-    model: DEFAULT_LLM_MODEL,
+    model: openai(DEFAULT_LLM_MODEL),
     system,
     prompt: intentText,
     timeout: 60_000,
