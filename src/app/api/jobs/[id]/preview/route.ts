@@ -13,6 +13,8 @@ import { getOrCreatePublishedPromptVersion } from "@/lib/prompt-version";
 import { normalizeLlmModel, normalizeWebSearchMode } from "@/lib/llm-defaults";
 import { compilePromptTemplate, coerceStringVars } from "@/lib/prompt-compile";
 
+export const maxDuration = 300;
+
 type Params = { params: Promise<{ id: string }> };
 
 const bodySchema = z.object({

@@ -10,6 +10,8 @@ import { enforceDailyRunLimit } from "@/lib/limits";
 import { normalizeLlmModel } from "@/lib/llm-defaults";
 import { compilePromptTemplate, coerceStringVars } from "@/lib/prompt-compile";
 
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   try {
     const userId = await requireUserId();

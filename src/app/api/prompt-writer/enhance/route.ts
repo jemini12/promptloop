@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUserId } from "@/lib/authz";
 import { errorResponse } from "@/lib/http";
 import { enforceDailyRunLimit } from "@/lib/limits";
+
+export const maxDuration = 300;
 import { enhancePrompt } from "@/lib/prompt-writer";
 import { promptWriterEnhanceSchema } from "@/lib/validation";
 
