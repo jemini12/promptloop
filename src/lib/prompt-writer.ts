@@ -1,4 +1,5 @@
 import { generateText } from "ai";
+import { openai } from "@ai-sdk/openai";
 import { extractUsage } from "@/lib/ai-result";
 import { DEFAULT_LLM_MODEL } from "@/lib/llm-defaults";
 import { isRecord } from "@/lib/type-guards";
@@ -54,7 +55,7 @@ function buildEnhancerInstructions(allowStrongerRewrite: boolean): string {
 
 export async function enhancePrompt(input: EnhancePromptInput): Promise<EnhancePromptOutput> {
   const result = await generateText({
-    model: DEFAULT_LLM_MODEL,
+    model: openai(DEFAULT_LLM_MODEL),
     system: buildEnhancerInstructions(input.allowStrongerRewrite),
     prompt: input.prompt,
     timeout: 60_000,

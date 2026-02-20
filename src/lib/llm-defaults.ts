@@ -1,5 +1,5 @@
-export const DEFAULT_LLM_MODEL = "google/gemini-3-flash" as const;
-export const DEFAULT_WEB_SEARCH_MODE = "perplexity" as const;
+export const DEFAULT_LLM_MODEL = "gpt-5-mini" as const;
+export const DEFAULT_WEB_SEARCH_MODE = "native" as const;
 
 export type WebSearchMode = typeof DEFAULT_WEB_SEARCH_MODE | "parallel";
 
@@ -12,5 +12,22 @@ export function normalizeLlmModel(model: unknown): string {
     return DEFAULT_LLM_MODEL;
   }
   const trimmed = model.trim();
-  return trimmed ? trimmed : DEFAULT_LLM_MODEL;
+  if (!trimmed) return DEFAULT_LLM_MODEL;
+
+  if (trimmed.includes("/")) {
+    const [provider, rest] = trimmed.split("/", 2);
+    if (provider === "openai" && rest && rest.trim()) {
+      return rest.trim();
+    }
+    return DEFAULT_LLM_MODEL;
+  }
+
+  return trimmed;
 }
+
+export const AVAILABLE_OPENAI_MODELS: Array<{ id: string; name: string }> = [
+  { id: "gpt-5-mini", name: "gpt-5-mini" },
+  { id: "gpt-5.2", name: "gpt-5.2" },
+  { id: "gpt-5.1", name: "gpt-5.1" },
+  { id: "gpt-5", name: "gpt-5" },
+];
