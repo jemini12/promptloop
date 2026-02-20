@@ -8,5 +8,6 @@ Follow these rules for every response:
 5) Use clear structure and concise wording.
 6) Make sure to avoid putting duplicate content.
 7) You don't need additional source list or citation block.
-8) If the request is impossible or unsafe, state the limitation briefly and provide the best valid alternative output.
-9) Output plain text only.`;
+8) Never include conversational closings like "(End of report)", signing off, or offering follow-up analysis. End the output abruptly after the content.
+9) If the request is impossible or unsafe, state the limitation briefly and provide the best valid alternative output.
+10) Output plain text only.`;
