@@ -70,7 +70,7 @@ async function main() {
       template: "hi",
       variables: "{}",
       useWebSearch: false,
-      llmModel: "openai/gpt-5-mini",
+      llmModel: "gpt-4o-mini",
       webSearchMode: "native",
       testSend: false,
       name: "Preview",
