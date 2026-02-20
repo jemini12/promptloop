@@ -1,11 +1,12 @@
-import { streamText, convertToModelMessages, tool, stepCountIs, type UIMessage } from "ai";
+import { streamText, convertToModelMessages, tool, stepCountIs, type UIMessage, createUIMessageStreamResponse, consumeStream } from "ai";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { openai } from "@ai-sdk/openai";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/authz";
 import { errorResponse } from "@/lib/http";
-import { DEFAULT_LLM_MODEL, normalizeLlmModel, normalizeWebSearchMode } from "@/lib/llm-defaults";
+import { AVAILABLE_OPENAI_MODELS, DEFAULT_LLM_MODEL, normalizeLlmModel, normalizeWebSearchMode } from "@/lib/llm-defaults";
 import { computeNextRunAt } from "@/lib/schedule";
 import { toDbChannelConfig, toMaskedApiJob, toRunnableChannel } from "@/lib/jobs";
 import { recordAudit } from "@/lib/audit";
@@ -18,7 +19,14 @@ import { enhancePrompt } from "@/lib/prompt-writer";
 import { generatePromptDraftFromIntent, inferUseWebSearch, proposeSchedule } from "@/lib/job-intents";
 import { redactMessageForStorage } from "@/lib/chat-redact";
 
-export const maxDuration = 30;
+export const maxDuration = 300;
+
+function generateChatMessageId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random()}`;
+}
 
 const bodySchema = z.object({
   messages: z.array(z.unknown()),
@@ -52,11 +60,45 @@ const webhookConfigSchema = z
     }
   });
 
-const channelSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("discord"), config: z.object({ webhookUrl: z.string().url() }) }),
-  z.object({ type: z.literal("telegram"), config: z.object({ botToken: z.string().min(10), chatId: z.string().min(1) }) }),
-  z.object({ type: z.literal("webhook"), config: webhookConfigSchema }),
-]);
+const discordChannelSchema = z
+  .union([
+    z.object({ type: z.literal("discord"), config: z.object({ webhookUrl: z.string().url() }) }),
+    z.object({ type: z.literal("discord"), webhookUrl: z.string().url() }),
+  ])
+  .transform((value) => {
+    if ("config" in value) {
+      return value;
+    }
+    return { type: "discord" as const, config: { webhookUrl: value.webhookUrl } };
+  });
+
+const telegramChannelSchema = z
+  .union([
+    z.object({ type: z.literal("telegram"), config: z.object({ botToken: z.string().min(10), chatId: z.string().min(1) }) }),
+    z.object({ type: z.literal("telegram"), botToken: z.string().min(10), chatId: z.string().min(1) }),
+  ])
+  .transform((value) => {
+    if ("config" in value) {
+      return value;
+    }
+    return { type: "telegram" as const, config: { botToken: value.botToken, chatId: value.chatId } };
+  });
+
+const webhookChannelSchema = z
+  .union([
+    z.object({ type: z.literal("webhook"), config: webhookConfigSchema }),
+    z.object({ type: z.literal("webhook") }).merge(webhookConfigSchema),
+  ])
+  .transform((value) => {
+    if ("config" in value) {
+      return value;
+    }
+    const { type: _type, ...config } = value;
+    void _type;
+    return { type: "webhook" as const, config };
+  });
+
+const channelSchema = z.union([discordChannelSchema, telegramChannelSchema, webhookChannelSchema]);
 
 const createJobInputSchema = z
   .object({
@@ -65,7 +107,7 @@ const createJobInputSchema = z
     variables: z.record(z.string(), z.string()).optional().default({}),
     useWebSearch: z.boolean().optional().default(false),
     llmModel: z.string().optional(),
-    webSearchMode: z.enum(["perplexity", "parallel"]).optional(),
+    webSearchMode: z.enum(["native", "parallel"]).optional(),
     scheduleType: z.enum(["daily", "weekly", "cron"]),
     scheduleTime: z.string().optional(),
     scheduleDayOfWeek: z.number().int().min(0).max(6).optional(),
@@ -98,7 +140,7 @@ const updateJobInputSchema = z
     variables: z.record(z.string(), z.string()).optional(),
     useWebSearch: z.boolean().optional(),
     llmModel: z.string().optional(),
-    webSearchMode: z.enum(["perplexity", "parallel"]).optional(),
+    webSearchMode: z.enum(["native", "parallel"]).optional(),
     scheduleType: z.enum(["daily", "weekly", "cron"]).optional(),
     scheduleTime: z.string().optional(),
     scheduleDayOfWeek: z.number().int().min(0).max(6).optional(),
@@ -138,7 +180,7 @@ const previewTemplateInputSchema = z.object({
   variables: z.record(z.string(), z.string()).optional().default({}),
   useWebSearch: z.boolean().optional().default(false),
   llmModel: z.string().optional(),
-  webSearchMode: z.enum(["perplexity", "parallel"]).optional(),
+  webSearchMode: z.enum(["native", "parallel"]).optional(),
   testSend: z.boolean().optional().default(false),
   nowIso: z.string().optional(),
   timezone: z.string().max(64).optional(),
@@ -188,6 +230,8 @@ Rules:
 - Ask only the minimum questions needed.
 - Never repeat secrets back (webhook URLs, bot tokens).
 - Before creating or updating a job, confirm: schedule, delivery target, and what the prompt should produce.
+- If the user message contains a Discord webhook URL, assume delivery is Discord and do not ask where to deliver.
+- If the user says "proceed" / "yes" / "create it" and the required fields are known, call create_job.
 - For destructive operations (delete), ask for explicit confirmation and then call the tool.
 - Use tools to read current state before changing it.`;
 
@@ -245,42 +289,87 @@ export async function POST(req: Request) {
       });
     }
 
-    async function upsertMessage(message: UIMessage) {
-      if (!persist || !chatId) return;
-
-      const redacted = redactMessageForStorage(message);
-      const messageId = typeof message.id === "string" && message.id.trim() ? message.id : "";
-      if (!messageId) return;
-
-      if (!prismaChat.chatMessage) {
-        throw new Error("Chat persistence is not available.");
-      }
-
-      await prismaChat.chatMessage.upsert({
-        where: { chatId_messageId: { chatId, messageId } },
-        create: {
-          chatId,
-          messageId,
-          role: message.role,
-          content: redacted.content,
-          message: redacted.message as Prisma.InputJsonValue,
-          redacted: redacted.redacted,
-        },
-        update: {
-          role: message.role,
-          content: redacted.content,
-          message: redacted.message as Prisma.InputJsonValue,
-          redacted: redacted.redacted,
-        },
-      });
+    function parseMessageCreatedAt(message: UIMessage): Date | null {
+      const meta = message.metadata;
+      if (!meta || typeof meta !== "object") return null;
+      const createdAt = (meta as { createdAt?: unknown }).createdAt;
+      if (typeof createdAt !== "string") return null;
+      const t = Date.parse(createdAt);
+      if (!Number.isFinite(t)) return null;
+      const d = new Date(t);
+      if (Number.isNaN(d.getTime())) return null;
+      return d;
     }
 
-    if (persist) {
-      await ensureChat();
-      const lastUser = [...messages].reverse().find((m) => m && typeof m === "object" && (m as { role?: unknown }).role === "user");
-      if (lastUser) {
-        await upsertMessage(lastUser);
-      }
+    async function persistTranscript(transcript: UIMessage[]) {
+      if (!persist || !chatId) return;
+      if (!prismaChat.chatMessage) throw new Error("Chat persistence is not available.");
+
+      const filtered = transcript
+        .filter((m): m is UIMessage => !!m && typeof m === "object")
+        .filter((m) => typeof m.id === "string" && m.id.trim())
+        .filter((m) => m.role === "system" || m.role === "user" || m.role === "assistant");
+
+      if (filtered.length === 0) return;
+
+      await prisma.$transaction(async (tx) => {
+        const txAny = tx as unknown as Record<string, unknown>;
+        const txChatMessage = txAny.chatMessage as
+          | {
+              findMany: (args: unknown) => Promise<Array<Record<string, unknown>>>;
+              upsert: (args: unknown) => Promise<unknown>;
+            }
+          | undefined;
+        if (!txChatMessage) {
+          throw new Error("Chat persistence is not available.");
+        }
+
+        const ids = filtered.map((m) => m.id);
+        const existing = await txChatMessage.findMany({
+          where: { chatId, messageId: { in: ids } },
+          select: { messageId: true, messageCreatedAt: true },
+        });
+        const existingById = new Map(
+          existing
+            .map((r) => {
+              const messageId = typeof r.messageId === "string" ? r.messageId : "";
+              const messageCreatedAt = r.messageCreatedAt instanceof Date ? r.messageCreatedAt : null;
+              return messageId ? ([messageId, { messageId, messageCreatedAt }] as const) : null;
+            })
+            .filter((x): x is NonNullable<typeof x> => x != null),
+        );
+
+        for (const [i, message] of filtered.entries()) {
+          const messageId = message.id;
+          const redacted = redactMessageForStorage(message);
+          const desiredSeq = i + 1;
+          const desiredCreatedAt = parseMessageCreatedAt(message);
+          const prev = existingById.get(messageId);
+          const messageCreatedAt = desiredCreatedAt ?? prev?.messageCreatedAt ?? undefined;
+
+          await txChatMessage.upsert({
+            where: { chatId_messageId: { chatId, messageId } },
+            create: {
+              chatId,
+              messageId,
+              seq: desiredSeq,
+              role: message.role,
+              content: redacted.content,
+              message: redacted.message as Prisma.InputJsonValue,
+              redacted: redacted.redacted,
+              ...(messageCreatedAt ? { messageCreatedAt } : {}),
+            },
+            update: {
+              seq: desiredSeq,
+              role: message.role,
+              content: redacted.content,
+              message: redacted.message as Prisma.InputJsonValue,
+              redacted: redacted.redacted,
+              ...(messageCreatedAt ? { messageCreatedAt } : {}),
+            },
+          });
+        }
+      });
     }
 
     const tools = {
@@ -623,23 +712,10 @@ export async function POST(req: Request) {
         },
       }),
       list_models: tool({
-        description: "List available gateway language models.",
+        description: "List available OpenAI language models.",
         inputSchema: z.object({}),
         execute: async () => {
-          const response = await fetch("https://ai-gateway.vercel.sh/v1/models", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          });
-          const data = (await response.json().catch(() => null)) as unknown;
-          const list =
-            data && typeof data === "object" && data !== null && "data" in data && Array.isArray((data as { data?: unknown }).data)
-              ? ((data as { data: unknown[] }).data as Array<{ id?: unknown; name?: unknown; type?: unknown }>)
-              : [];
-          const models = list
-            .filter((m) => m && typeof m.id === "string" && m.id.trim() && ((m as { type?: unknown }).type == null || (m as { type?: unknown }).type === "language"))
-            .map((m) => ({ id: String(m.id), name: typeof m.name === "string" && m.name.trim() ? m.name : String(m.id) }))
-            .sort((a, b) => a.name.localeCompare(b.name));
-          return { ok: response.ok, models };
+          return { ok: true, models: AVAILABLE_OPENAI_MODELS };
         },
       }),
       enhance_prompt: tool({
@@ -796,27 +872,38 @@ export async function POST(req: Request) {
       }),
     };
 
+    const nowIso = new Date().toISOString();
     const result = streamText({
-      model: DEFAULT_LLM_MODEL,
-      system: CHAT_SYSTEM_PROMPT,
+      model: openai("gpt-5.2-chat-latest"),
+      system: `${CHAT_SYSTEM_PROMPT}\n\nCurrent time (UTC): ${nowIso}`,
       messages: await convertToModelMessages(messages),
       tools,
       stopWhen: stepCountIs(10),
     });
 
-    if (persist) {
-      result.consumeStream();
-    }
-
-    return result.toUIMessageStreamResponse({
+    const uiStream = result.toUIMessageStream<UIMessage>({
       originalMessages: messages,
+      generateMessageId: generateChatMessageId,
       onFinish: async ({ messages: finalMessages }) => {
         if (!persist) return;
-        await ensureChat();
-        for (const m of finalMessages) {
-          await upsertMessage(m);
+        try {
+          await ensureChat();
+          await persistTranscript(finalMessages);
+        } catch (e) {
+          console.error("[chat.persist] finish failed", e);
         }
       },
+      onError: (e) => {
+        console.error("[chat.ui-stream] error", e);
+        return "Streaming error";
+      },
+    });
+
+    return createUIMessageStreamResponse({
+      stream: uiStream,
+      consumeSseStream: persist
+        ? ({ stream }) => consumeStream({ stream, onError: (e) => console.error("[chat.persist] consume failed", e) })
+        : undefined,
     });
   } catch (error) {
     return errorResponse(error);

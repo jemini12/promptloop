@@ -24,7 +24,9 @@ export async function GET(req: Request) {
         | undefined,
       chatMessage: prismaAny.chatMessage as
         | {
-            findMany: (args: unknown) => Promise<Array<{ message: unknown }>>;
+            findMany: (args: unknown) => Promise<
+              Array<{ id: string; message: unknown; messageId: string; role: string; content: string; createdAt: Date; seq: number; messageCreatedAt: Date }>
+            >;
           }
         | undefined,
     };
@@ -44,11 +46,43 @@ export async function GET(req: Request) {
 
     const rows = await prismaChat.chatMessage.findMany({
       where: { chatId: parsed.chatId },
-      orderBy: { createdAt: "asc" },
-      select: { message: true },
+      orderBy: [{ seq: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+      select: { id: true, seq: true, messageCreatedAt: true, createdAt: true, message: true, messageId: true, role: true, content: true },
     });
 
-    return Response.json({ messages: rows.map((r: { message: unknown }) => r.message) });
+    const messages = rows
+      .map((row) => {
+        const createdAt = row.messageCreatedAt instanceof Date ? row.messageCreatedAt.toISOString() : null;
+        const seq = typeof row.seq === "number" && Number.isFinite(row.seq) ? row.seq : null;
+
+        if (row.message && typeof row.message === "object") {
+          const msg = row.message as Record<string, unknown>;
+          const meta = msg.metadata && typeof msg.metadata === "object" && msg.metadata !== null ? (msg.metadata as Record<string, unknown>) : {};
+          return {
+            ...msg,
+            metadata: {
+              ...meta,
+              ...(createdAt ? { createdAt } : {}),
+              ...(seq != null ? { seq } : {}),
+            },
+          };
+        }
+
+        const role = row.role;
+        if (role !== "system" && role !== "user" && role !== "assistant") {
+          return null;
+        }
+
+        return {
+          id: row.messageId,
+          role,
+          metadata: { ...(createdAt ? { createdAt } : {}), ...(seq != null ? { seq } : {}) },
+          parts: row.content.trim() ? [{ type: "text", text: row.content }] : [],
+        };
+      })
+      .filter((m): m is NonNullable<typeof m> => m != null);
+
+    return Response.json({ messages });
   } catch (error) {
     return errorResponse(error);
   }
